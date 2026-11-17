@@ -1,0 +1,121 @@
+/*
+ * Tokens de identidad · Cronograma institucional CCDB
+ *
+ * Única fuente de colores y tipografías de marca. Todos los colores salen del
+ * Manual de Identidad Salesianos COM (GMM004 V:03.07.25), pp. 9 y 10.
+ * No agregar colores que no estén en el manual ni calcular tintes o mezclas.
+ */
+
+/* ---------- Tipografías (autoalojadas, licencia SIL OFL 1.1) ---------- */
+@font-face {
+  font-family: 'Cal Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/CalSans-Regular-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Urbanist';
+  font-style: normal;
+  font-weight: 100 900; /* fuente variable: un solo archivo para todos los pesos */
+  font-display: swap;
+  src: url('../assets/fonts/Urbanist-variable-latin.woff2') format('woff2');
+}
+
+:root {
+  /* ---------- Paleta principal (manual p. 9) ---------- */
+  --rojo: #e10613;          /* institucional del logo */
+  --crema: #fcecd7;         /* institucional del logo */
+  --ambar: #ffa415;
+  --marron: #91422b;
+  --rojo-oscuro: #ae0f0a;
+  --greige: #b6aca0;
+
+  /* ---------- Complementarios (manual p. 10) ---------- */
+  --crema-2: #fdedd8;
+  --naranja: #ff7110;
+  --azul: #a1c7ff;
+  --lila: #efa4ff;
+  --verde: #63c67f;
+  --carbon: #2d2d2d;
+
+  /* ---------- Apoyo: versión clara de cada complementario ---------- */
+  --greige-claro: #b7ada1;
+  --rosado-claro: #FFBBC6;
+  --naranja-claro: #ffbb8d;
+  --ambar-claro: #ffd89f;
+  --azul-claro: #cce3ff;
+  --lila-claro: #f9deff;
+  --verde-claro: #53f271;
+  --gris: #848484;
+
+  --blanco: #ffffff;
+
+  /* ---------- Usos en la interfaz ----------
+   * Contraste comprobado (WCAG):
+   *   blanco sobre rojo 4.96 · sobre rojo oscuro 7.31 · sobre marrón 6.96
+   *   carbón sobre crema 11.9 · sobre ámbar 6.9 · sobre tonos claros ≥ 8
+   *   marrón sobre crema 6.0 · rojo oscuro sobre blanco 7.3
+   * El gris #848484 no alcanza 4.5 para texto pequeño: solo para líneas.
+   */
+  --fondo: var(--crema);
+  --superficie: var(--blanco);
+  --superficie-suave: var(--crema-2);
+  --texto: var(--carbon);
+  --texto-secundario: var(--marron);
+  --linea: var(--greige);
+  --linea-fuerte: var(--gris);
+
+  --accion: var(--rojo);
+  --accion-hover: var(--rojo-oscuro);
+  --accion-texto: var(--blanco);
+  --acento: var(--ambar);
+  --acento-texto: var(--carbon);
+  --acento-suave: var(--ambar-claro);
+  --info-suave: var(--azul-claro);
+  --error: var(--rojo-oscuro);
+  --foco: var(--carbon);
+
+  /* ---------- Tipografía ----------
+   * Jerarquía del manual (p. 13): título 33 pt · subtítulo 14 pt · cuerpo 8 pt
+   * (proporción aproximada 4 : 1,75 : 1), adaptada a pantalla.
+   */
+  --fuente-titulo: 'Cal Sans', system-ui, 'Segoe UI', Arial, sans-serif;
+  --fuente-cuerpo: 'Urbanist', system-ui, 'Segoe UI', Arial, sans-serif;
+  --peso-cuerpo: 500;   /* Urbanist Medium */
+  --peso-fuerte: 700;
+
+  --t-titulo: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  --t-subtitulo: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+  --t-cuerpo: 1rem;
+  --t-pequeno: 0.875rem;
+  --t-mini: 0.78rem;
+
+  /* ---------- Formas (franjas en forma de píldora del manual) ---------- */
+  --radio-pildora: 999px;
+  --radio: 16px;
+  --radio-sm: 10px;
+  --espacio: 1rem;
+
+  /* ---------- Logo (manual pp. 16 y 18) ----------
+   * 1 cm ≈ 38 px CSS. Horizontal ≥ 2,5 cm de ancho (95 px);
+   * área de protección ≈ 0,5 cm (19 px) en todos los lados.
+   */
+  --logo-min-horizontal: 95px;
+  --logo-min-vertical: 76px;
+  --logo-proteccion: 19px;
+}
+
+/* Tema oscuro (usado por el widget con ?tema=oscuro).
+ * Fondo carbón #2d2d2d con texto crema; logo en versión blanca. */
+[data-tema='oscuro'] {
+  --fondo: var(--carbon);
+  --superficie: var(--carbon);
+  --superficie-suave: var(--carbon);
+  --texto: var(--crema);
+  --texto-secundario: var(--ambar-claro);
+  --linea: var(--gris);
+  --linea-fuerte: var(--greige);
+  --acento-suave: var(--marron);
+  --foco: var(--ambar);
+}
