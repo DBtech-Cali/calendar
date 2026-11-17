@@ -52,18 +52,19 @@ window.CCDB_CONFIG = {
   /*
    * Áreas. El id no se debe cambiar después de tener datos guardados
    * (también está en firestore.rules). El color solo puede ser uno de la
-   * paleta del manual (ver css/tokens.css).
+   * paleta del manual (ver css/tokens.css). `corto` es opcional: nombre
+   * abreviado para espacios pequeños (celdas del mes, widget).
    */
   areas: [
     { id: 'inspectorial', nombre: 'Inspectorial', color: '#91422b' },
     { id: 'administracion', nombre: 'Administración', color: '#848484' },
     { id: 'sst', nombre: 'SST', color: '#ff7110' },
-    { id: 'gestion-humana', nombre: 'Gestión Humana', color: '#63c67f' },
+    { id: 'gestion-humana', nombre: 'Gestión Humana', corto: 'G. Humana', color: '#63c67f' },
     { id: 'pastoral', nombre: 'Pastoral', color: '#e10613' },
     { id: 'etdh', nombre: 'ETDH', color: '#a1c7ff' },
     { id: 'bienestar', nombre: 'Bienestar', color: '#efa4ff' },
-    { id: 'proteccion', nombre: 'Casa de Protección', color: '#FFBBC6' },
-    { id: 'externado', nombre: 'Externado Media Jornada', color: '#ffa415' },
+    { id: 'proteccion', nombre: 'Casa de Protección', corto: 'Protección', color: '#FFBBC6' },
+    { id: 'externado', nombre: 'Externado Media Jornada', corto: 'Externado', color: '#ffa415' },
     { id: 'calidad', nombre: 'Calidad', color: '#2d2d2d' },
     { id: 'oratorio', nombre: 'Oratorio', color: '#53f271' },
     { id: 'musica', nombre: 'Música', color: '#ae0f0a' }
