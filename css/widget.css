@@ -152,8 +152,8 @@ button { font: inherit; color: inherit; }
 }
 @media (max-width: 560px) {
   .w-dias { grid-template-columns: 1fr; gap: .45rem; }
-  .w-reloj { text-align: left; }
-  .w-modo { width: 100%; }
+  .w-reloj { text-align: left; padding-left: var(--logo-proteccion); }
+  .w-modo { width: calc(100% - var(--logo-proteccion)); margin-left: var(--logo-proteccion); }
   .w-modo__opcion { flex: 1; }
   .w-dia--pasado .w-lista { display: none; } /* en ventana pequeña, días pasados solo con el encabezado */
 }
