@@ -1,0 +1,159 @@
+/*
+ * Cronograma institucional CCDB · Widget de la semana.
+ * Pensado para dejarse abierto en un computador, proyectarse o verse en una
+ * ventana pequeña. Solo usa variables de css/tokens.css.
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente-cuerpo);
+  font-weight: var(--peso-cuerpo);
+  line-height: 1.35;
+  font-size: clamp(.85rem, .7rem + .35vw, 1.1rem);
+}
+
+h1, h2 { font-family: var(--fuente-titulo); font-weight: 400; margin: 0; line-height: 1.1; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; border-radius: 6px; }
+
+/* ---------- Cabecera ---------- */
+.w-cabecera {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem;
+  padding: 0 clamp(.75rem, 2vw, 1.5rem) 0 0;
+  background: var(--superficie);
+  border-bottom: 4px solid var(--acento);
+}
+
+/* Área de protección del logo (manual p. 18). */
+.logo-zona { padding: var(--logo-proteccion); line-height: 0; flex: none; }
+.logo { display: block; height: auto; width: clamp(var(--logo-min-horizontal), 12vw, 200px); }
+
+.w-titulos { flex: 1; min-width: 10rem; padding: .5rem 0; }
+.w-titulo { font-size: clamp(1.3rem, 1rem + 1.6vw, 2.4rem); }
+.w-rango { color: var(--texto-secundario); font-weight: 600; }
+
+.w-reloj { text-align: right; padding: .5rem 0; }
+.w-hora { font-family: var(--fuente-titulo); font-size: clamp(1.4rem, 1rem + 2vw, 2.8rem); line-height: 1; }
+.w-fecha { color: var(--texto-secundario); font-weight: 600; font-size: .9em; }
+
+.w-modo {
+  display: inline-flex; gap: 4px; padding: 4px; margin: .5rem 0;
+  border: 2px solid var(--linea); border-radius: var(--radio-pildora);
+  background: var(--superficie);
+}
+.w-modo__opcion {
+  min-height: 34px; padding: .2rem .9rem;
+  border: 0; border-radius: var(--radio-pildora); background: transparent;
+  font-weight: var(--peso-fuerte); font-size: .9em; cursor: pointer;
+}
+.w-modo__opcion[aria-pressed='true'] { background: var(--acento); color: var(--acento-texto); }
+
+.w-aviso {
+  margin: .75rem clamp(.75rem, 2vw, 1.5rem) 0;
+  padding: .5rem .9rem; border-radius: var(--radio);
+  background: var(--info-suave); color: var(--carbon); font-weight: 600; font-size: .9em;
+}
+
+/* ---------- Días ---------- */
+.w-dias {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--columnas, 7), minmax(0, 1fr));
+  gap: .6rem;
+  padding: .9rem clamp(.75rem, 2vw, 1.5rem);
+  align-items: start;
+  align-content: start;
+}
+
+.w-dia {
+  display: flex; flex-direction: column; gap: .5rem;
+  min-width: 0; min-height: 100%;
+  padding: .65rem;
+  background: var(--superficie);
+  border: 2px solid transparent;
+  border-radius: var(--radio);
+}
+.w-dia--hoy { border-color: var(--acento); background: var(--superficie); box-shadow: inset 0 6px 0 var(--acento); }
+/* Días pasados atenuados: sin fondo de tarjeta y con borde punteado. */
+.w-dia--pasado { background: transparent; border: 2px dashed var(--linea); }
+.w-dia--pasado .w-dia__nombre { color: var(--texto-secundario); }
+.w-dia--pasado .w-act__titulo { font-weight: var(--peso-cuerpo); }
+.w-dia--pasado .w-act { background: transparent; }
+
+.w-dia__cabeza { display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .5rem; font-size: 1.2em; }
+.w-dia__numero { font-family: var(--fuente-cuerpo); font-weight: var(--peso-fuerte); font-size: .7em; color: var(--texto-secundario); }
+.w-hoy {
+  margin-left: auto; align-self: center;
+  padding: .05rem .6rem; border-radius: var(--radio-pildora);
+  background: var(--accion); color: var(--accion-texto);
+  font-family: var(--fuente-cuerpo); font-weight: var(--peso-fuerte); font-size: .62em;
+}
+
+.w-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+.w-vacio { color: var(--texto-secundario); font-size: .9em; }
+
+.w-act {
+  display: flex; flex-direction: column; gap: .1rem;
+  padding: .4rem .55rem .45rem .65rem;
+  border-left: 5px solid var(--color-area);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-suave);
+}
+.w-act__hora { font-size: .8em; font-weight: var(--peso-fuerte); }
+.w-act__titulo { font-weight: var(--peso-fuerte); line-height: 1.25; overflow-wrap: anywhere; }
+.w-act__area {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .72em; font-weight: var(--peso-fuerte); text-transform: uppercase; letter-spacing: .04em;
+}
+.w-act__resp { font-size: .8em; color: var(--texto-secundario); }
+
+.punto {
+  display: inline-block; flex: none;
+  width: .75em; height: .75em; border-radius: 50%;
+  background: var(--color-area);
+}
+
+/* ---------- Pie ---------- */
+.w-pie {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
+  padding: .6rem clamp(.75rem, 2vw, 1.5rem) .9rem;
+  font-size: .8em;
+}
+.w-leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem .9rem; }
+.w-leyenda li { display: inline-flex; align-items: center; gap: .35rem; font-weight: 600; }
+.w-actualizado { color: var(--texto-secundario); }
+
+/* Tema oscuro: tarjetas con borde en lugar de fondo. */
+[data-tema='oscuro'] .w-cabecera { background: var(--carbon); border-bottom-color: var(--rojo); }
+[data-tema='oscuro'] .w-dia { border-color: var(--gris); }
+[data-tema='oscuro'] .w-dia--hoy { border-color: var(--acento); }
+[data-tema='oscuro'] .w-dia--pasado { border-style: dashed; }
+[data-tema='oscuro'] .w-act { border: 1px solid var(--gris); border-left: 5px solid var(--color-area); }
+/* Anillo claro para que los puntos oscuros (p. ej. Calidad) se vean. */
+[data-tema='oscuro'] .punto { box-shadow: 0 0 0 1.5px var(--greige); }
+[data-tema='oscuro'] .w-aviso { background: var(--azul-claro); }
+[data-tema='oscuro'] .w-modo__opcion[aria-pressed='true'] { color: var(--carbon); }
+
+/* ---------- Ventanas medianas y pequeñas ---------- */
+@media (max-width: 1000px) {
+  .w-dias { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .w-dia { min-height: 0; }
+}
+@media (max-width: 560px) {
+  .w-dias { grid-template-columns: 1fr; gap: .45rem; }
+  .w-reloj { text-align: left; }
+  .w-modo { width: 100%; }
+  .w-modo__opcion { flex: 1; }
+  .w-dia--pasado .w-lista { display: none; } /* en ventana pequeña, días pasados solo con el encabezado */
+}

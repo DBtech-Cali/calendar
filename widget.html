@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semana · Cronograma institucional CCDB</title>
+  <meta name="description" content="Actividades de la semana del Centro de Capacitación Don Bosco.">
+  <meta name="theme-color" content="#fcecd7">
+  <link rel="icon" type="image/png" href="assets/logos/LOGOS 2025 - FULLCOLOR - VERTICAL.png">
+  <link rel="manifest" href="widget.webmanifest">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/widget.css">
+</head>
+<body>
+  <header class="w-cabecera">
+    <div class="logo-zona">
+      <img id="logo" class="logo" alt="Centro de Capacitación Don Bosco · Salesianos de Don Bosco – Cali" src="assets/logos/LOGOS 2025 - FULLCOLOR - HORIZONTAL.png">
+    </div>
+    <div class="w-titulos">
+      <h1 class="w-titulo" id="w-titulo">Esta semana</h1>
+      <p class="w-rango" id="w-rango"></p>
+    </div>
+    <div class="w-reloj" aria-live="off">
+      <p class="w-hora" id="w-hora"></p>
+      <p class="w-fecha" id="w-fecha"></p>
+    </div>
+    <div class="w-modo" role="group" aria-label="Qué mostrar">
+      <button type="button" class="w-modo__opcion" data-modo="semana" aria-pressed="true">Semana actual</button>
+      <button type="button" class="w-modo__opcion" data-modo="proximos" aria-pressed="false">Próximos 7 días</button>
+    </div>
+  </header>
+
+  <p class="w-aviso" id="w-aviso" hidden></p>
+
+  <main class="w-dias" id="w-dias" aria-live="polite"></main>
+
+  <footer class="w-pie">
+    <ul class="w-leyenda" id="w-leyenda" aria-label="Áreas"></ul>
+    <p class="w-actualizado" id="w-actualizado"></p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/logic.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/widget.js"></script>
+</body>
+</html>
