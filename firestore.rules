@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Reglas de Firestore · Cronograma institucional CCDB
+//
+// - Cualquiera puede LEER las actividades (el calendario es público).
+// - Solo la cuenta única de edición puede crear, modificar o eliminar.
+// - Se valida el esquema de cada actividad.
+//
+// IMPORTANTE: reemplaza CORREO_DE_EDICION@ejemplo.org por el mismo correo
+// que escribiste en js/config.js (correoEdicion). Si cambias las áreas en
+// config.js, actualiza también la lista de ids de áreas aquí abajo.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esEditor() {
+      return request.auth != null
+        && request.auth.token.email == 'CORREO_DE_EDICION@ejemplo.org';
+    }
+
+    function areasValidas() {
+      return ['inspectorial', 'administracion', 'sst', 'gestion-humana', 'pastoral', 'etdh',
+              'bienestar', 'proteccion', 'externado', 'calidad', 'oratorio', 'musica'];
+    }
+
+    function esFecha(v) {
+      return v is string && v.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
+    }
+
+    function esHoraOVacio(v) {
+      return v is string && (v == '' || v.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'));
+    }
+
+    function actividadValida(a) {
+      return a.keys().hasOnly(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'horaFin', 'responsable', 'serie', 'actualizado'])
+        && a.keys().hasAll(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'horaFin', 'responsable', 'serie', 'actualizado'])
+        && a.titulo is string && a.titulo.size() > 0 && a.titulo.size() <= 140
+        && a.area in areasValidas()
+        && esFecha(a.inicio) && esFecha(a.fin) && a.fin >= a.inicio
+        && esHoraOVacio(a.horaInicio) && esHoraOVacio(a.horaFin)
+        && (a.horaFin == '' || (a.horaInicio != '' && a.horaFin > a.horaInicio))
+        && a.responsable is string && a.responsable.size() <= 80
+        && a.serie is string && a.serie.size() <= 60
+        && a.actualizado == request.time;
+    }
+
+    match /actividades/{id} {
+      allow read: if true;
+      allow create, update: if esEditor() && actividadValida(request.resource.data);
+      allow delete: if esEditor();
+    }
+
+    // Todo lo demás queda cerrado.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}
