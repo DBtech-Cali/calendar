@@ -23,16 +23,14 @@ body { background: var(--blanco); font-size: 10pt; }
 }
 .celda--hoy .celda__numero { background: none; color: var(--texto); }
 .celda__lista { display: flex !important; }
-.celda__mas { display: none !important; }
-.solo-impresion { display: list-item; }
 .celda__puntos { display: none !important; }
 .ficha { break-inside: avoid; border-color: var(--greige); font-size: 7pt; padding: 1px 3px 1px 4px; }
 .ficha__area { font-size: 6pt; }
+.ficha__meta { font-size: 6.5pt; }
 .celda__numero { height: auto; min-width: 0; padding: 0 2px; font-size: 8pt; }
 .mes__dia-nombre { padding: 1mm; font-size: 8pt; }
 .cabecera__titulos { padding: 0 0 0 4mm; }
 .logo-zona { padding: 19px 19px 19px 0; }
-.ficha__titulo { -webkit-line-clamp: unset; display: block; }
 
 .semana__grilla { grid-template-columns: repeat(7, 1fr) !important; gap: 2mm; }
 .columna { border: 1px solid var(--greige); }

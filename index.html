@@ -97,10 +97,8 @@
       <h2 class="detalle__titulo" id="det-titulo"></h2>
       <dl class="detalle__datos">
         <dt>Fecha</dt><dd id="det-fecha"></dd>
-        <dt>Horario</dt><dd id="det-horario"></dd>
-        <dt>Responsable</dt><dd id="det-responsable"></dd>
+        <dt id="det-horario-t">Hora</dt><dd id="det-horario"></dd>
       </dl>
-      <p class="detalle__nota" id="det-serie" hidden>Esta actividad forma parte de una serie que se repite.</p>
     </div>
     <div class="dialogo__pie">
       <button type="button" class="boton" id="det-eliminar">Eliminar</button>
@@ -108,106 +106,33 @@
     </div>
   </dialog>
 
-  <!-- Formulario de actividad -->
+  <!-- Formulario de actividades: un área y varias filas -->
   <dialog class="dialogo dialogo--formulario" id="dlg-actividad" aria-labelledby="form-titulo">
     <form id="form-actividad" novalidate>
       <div class="dialogo__cabeza">
-        <h2 class="dialogo__titulo" id="form-titulo">Agregar actividad</h2>
+        <h2 class="dialogo__titulo" id="form-titulo">Agregar actividades</h2>
         <button type="button" class="boton boton--icono" data-cerrar aria-label="Cerrar"><span aria-hidden="true">×</span></button>
       </div>
-      <div class="dialogo__cuerpo campos">
-        <div class="campo">
+      <div class="dialogo__cuerpo">
+        <div class="campo campo--area">
           <label for="f-area">Área <span class="obligatorio">(obligatoria)</span></label>
           <select id="f-area" name="area" required aria-describedby="e-area"></select>
-          <p class="campo__error" id="e-area"></p>
-        </div>
-        <div class="campo">
-          <label for="f-titulo">Nombre de la actividad <span class="obligatorio">(obligatorio)</span></label>
-          <input id="f-titulo" name="titulo" type="text" maxlength="140" required autocomplete="off" aria-describedby="e-titulo c-titulo">
-          <p class="campo__ayuda" id="c-titulo">0 de 140 caracteres</p>
-          <p class="campo__error" id="e-titulo"></p>
-        </div>
-        <div class="campos__fila">
-          <div class="campo">
-            <label for="f-inicio">Fecha de inicio <span class="obligatorio">(obligatoria)</span></label>
-            <input id="f-inicio" name="inicio" type="date" required aria-describedby="e-inicio">
-            <p class="campo__error" id="e-inicio"></p>
-          </div>
-          <div class="campo">
-            <label for="f-fin">Fecha final</label>
-            <input id="f-fin" name="fin" type="date" aria-describedby="a-fin e-fin">
-            <p class="campo__ayuda" id="a-fin">Si dura un solo día, déjala igual.</p>
-            <p class="campo__error" id="e-fin"></p>
-          </div>
-        </div>
-        <div class="campos__fila">
-          <div class="campo">
-            <label for="f-hora-inicio">Hora de inicio</label>
-            <input id="f-hora-inicio" name="horaInicio" type="time" aria-describedby="e-horaInicio">
-            <p class="campo__error" id="e-horaInicio"></p>
-          </div>
-          <div class="campo">
-            <label for="f-hora-fin">Hora final</label>
-            <input id="f-hora-fin" name="horaFin" type="time" aria-describedby="e-horaFin">
-            <p class="campo__error" id="e-horaFin"></p>
-          </div>
-        </div>
-        <div class="campo">
-          <label for="f-responsable">Responsable</label>
-          <input id="f-responsable" name="responsable" type="text" maxlength="80" autocomplete="off" aria-describedby="e-responsable">
-          <p class="campo__error" id="e-responsable"></p>
+          <p class="campo__error" id="e-area" role="alert"></p>
         </div>
 
-        <p class="nota" id="nota-serie" hidden>Esta actividad forma parte de una serie. Los cambios se aplican solo a esta fecha.</p>
-
-        <fieldset class="repetir" id="repetir">
-          <legend>Repetición</legend>
-          <div class="campo">
-            <label for="f-repetir">¿Se repite?</label>
-            <select id="f-repetir">
-              <option value="no">No se repite</option>
-              <option value="semanal">Cada semana</option>
-              <option value="mensual">Cada mes</option>
-            </select>
+        <div class="filas" role="group" aria-labelledby="filas-titulo">
+          <p class="oculto" id="filas-titulo">Actividades</p>
+          <div class="filas__cabeza" aria-hidden="true">
+            <span>Fecha</span>
+            <span>Actividad</span>
+            <span></span>
+            <span>Hora <span class="obligatorio">(opcional)</span></span>
+            <span></span>
           </div>
-
-          <div class="repetir__opciones" id="rep-semanal" hidden>
-            <fieldset class="dias-semana">
-              <legend>Días de la semana</legend>
-              <div class="dias-semana__lista" id="rep-dias"></div>
-            </fieldset>
-            <div class="campo">
-              <label for="rep-cada">Frecuencia</label>
-              <select id="rep-cada">
-                <option value="1">Todas las semanas</option>
-                <option value="2">Cada 2 semanas</option>
-                <option value="3">Cada 3 semanas</option>
-                <option value="4">Cada 4 semanas</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="repetir__opciones" id="rep-mensual" hidden>
-            <div class="campo">
-              <label for="rep-dia">Día del mes</label>
-              <input id="rep-dia" type="number" min="1" max="31" inputmode="numeric" aria-describedby="a-rep-dia">
-              <p class="campo__ayuda" id="a-rep-dia">Si el mes no tiene ese día, se usa el último día del mes.</p>
-            </div>
-            <fieldset class="opciones-radio">
-              <legend>Si cae en sábado o domingo</legend>
-              <label><input type="radio" name="rep-fds" value="omitir" checked> Omitir ese mes</label>
-              <label><input type="radio" name="rep-fds" value="lunes"> Pasar al lunes siguiente</label>
-              <label><input type="radio" name="rep-fds" value="viernes"> Pasar al viernes anterior</label>
-            </fieldset>
-          </div>
-
-          <div class="campo" id="rep-hasta-campo" hidden>
-            <label for="rep-hasta">Repetir hasta</label>
-            <input id="rep-hasta" type="date" aria-describedby="a-rep-hasta">
-            <p class="campo__ayuda" id="a-rep-hasta">Máximo un año hacia adelante.</p>
-          </div>
-          <p class="vista-previa" id="rep-vista-previa" aria-live="polite"></p>
-        </fieldset>
+          <ol class="filas__lista" id="filas"></ol>
+          <button type="button" class="boton boton--pequeno boton--agregar-fila" id="btn-agregar-fila">+ Agregar otra actividad</button>
+          <p class="campo__ayuda" id="ayuda-filas">Consejo: al terminar de escribir una actividad, pulsa Enter para pasar a la siguiente fila.</p>
+        </div>
 
         <div class="aviso-cruce" id="aviso-cruce" role="status" aria-live="polite" hidden></div>
         <p class="campo__error" id="e-general" role="alert"></p>
@@ -218,6 +143,35 @@
       </div>
     </form>
   </dialog>
+
+  <template id="plantilla-fila">
+    <li class="fila">
+      <div class="fila__campo fila__campo--fecha">
+        <label class="fila__etiqueta" data-para="inicio">Fecha</label>
+        <input type="date" data-campo="inicio" required>
+      </div>
+      <div class="fila__campo fila__campo--titulo">
+        <label class="fila__etiqueta" data-para="titulo">Actividad</label>
+        <input type="text" data-campo="titulo" maxlength="140" autocomplete="off" enterkeyhint="next">
+      </div>
+      <div class="fila__campo fila__campo--varios">
+        <label class="fila__check"><input type="checkbox" data-campo="varios"> <span>Varios días</span></label>
+        <div class="fila__fin" hidden>
+          <label class="fila__etiqueta fila__etiqueta--visible" data-para="fin">Hasta</label>
+          <input type="date" data-campo="fin">
+        </div>
+      </div>
+      <div class="fila__campo fila__campo--hora">
+        <label class="fila__etiqueta" data-para="horaInicio">Hora</label>
+        <input type="time" data-campo="horaInicio">
+      </div>
+      <div class="fila__quitar">
+        <button type="button" class="boton boton--icono boton--quitar" data-quitar><span aria-hidden="true">×</span></button>
+      </div>
+      <p class="fila__error campo__error" data-error></p>
+      <p class="fila__cruce" data-cruce hidden></p>
+    </li>
+  </template>
 
   <!-- Contraseña -->
   <dialog class="dialogo dialogo--pequeno" id="dlg-clave" aria-labelledby="clave-titulo">
@@ -250,12 +204,6 @@
       </div>
       <div class="dialogo__cuerpo">
         <p id="eliminar-texto"></p>
-        <fieldset class="opciones-radio" id="eliminar-opciones" hidden>
-          <legend>Esta actividad se repite. ¿Qué quieres eliminar?</legend>
-          <label><input type="radio" name="eliminar-modo" value="solo" checked> Solo esta</label>
-          <label><input type="radio" name="eliminar-modo" value="siguientes"> Esta y las siguientes</label>
-          <label><input type="radio" name="eliminar-modo" value="serie"> Toda la serie</label>
-        </fieldset>
         <p class="campo__error" id="e-eliminar" role="alert"></p>
       </div>
       <div class="dialogo__pie">

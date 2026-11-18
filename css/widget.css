@@ -110,13 +110,14 @@ button { font: inherit; color: inherit; }
   border-radius: var(--radio-sm);
   background: var(--superficie-suave);
 }
-.w-act__hora { font-size: .8em; font-weight: var(--peso-fuerte); }
-.w-act__titulo { font-weight: var(--peso-fuerte); line-height: 1.25; overflow-wrap: anywhere; }
+.w-act__linea { display: block; line-height: 1.3; overflow-wrap: anywhere; }
 .w-act__area {
-  display: flex; align-items: center; gap: .35rem;
-  font-size: .72em; font-weight: var(--peso-fuerte); text-transform: uppercase; letter-spacing: .04em;
+  display: inline-flex; align-items: center; gap: .3rem; margin-right: .15rem;
+  font-size: .72em; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--texto-secundario); white-space: nowrap;
 }
-.w-act__resp { font-size: .8em; color: var(--texto-secundario); }
+.w-act__titulo { font-weight: var(--peso-fuerte); }
+.w-act__hora { font-size: .8em; font-weight: var(--peso-fuerte); color: var(--texto-secundario); }
 
 .punto {
   display: inline-block; flex: none;

@@ -1,6 +1,7 @@
 /*
  * Cronograma institucional CCDB · Lógica pura (sin DOM).
  *
+ * Actividad: { titulo, area, inicio, fin, horaInicio }.
  * Fechas siempre como texto local "AAAA-MM-DD" y horas como "HH:MM".
  * Los cálculos de calendario se hacen con Date.UTC para que la zona
  * horaria del equipo nunca corra un día.
@@ -19,9 +20,8 @@
   var DIAS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
   var DIAS_CORTOS = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
 
-  var LIMITE_REPETICIONES = 400;
   var MAX_TITULO = 140;
-  var MAX_RESPONSABLE = 80;
+  var DURACION_CRUCE = 60; // minutos que se asumen para revisar cruces
 
   /* ------------------------------------------------------------------ */
   /* Fechas                                                              */
@@ -137,22 +137,18 @@
   /* Actividades                                                         */
   /* ------------------------------------------------------------------ */
 
-  /** Normaliza una actividad: recorta textos y completa la fecha final. */
+  /**
+   * Normaliza una actividad: recorta textos y completa la fecha final.
+   * Campos: titulo, area, inicio, fin, horaInicio (opcional).
+   */
   function normalizar(act) {
-    var titulo = String(act.titulo || '').trim();
     var inicio = String(act.inicio || '').trim();
-    var fin = String(act.fin || '').trim() || inicio;
-    var horaInicio = String(act.horaInicio || '').trim();
-    var horaFin = horaInicio ? String(act.horaFin || '').trim() : '';
     return {
-      titulo: titulo,
+      titulo: String(act.titulo || '').trim().replace(/\s+/g, ' '),
       area: String(act.area || '').trim(),
       inicio: inicio,
-      fin: fin,
-      horaInicio: horaInicio,
-      horaFin: horaFin,
-      responsable: String(act.responsable || '').trim(),
-      serie: String(act.serie || '').trim()
+      fin: String(act.fin || '').trim() || inicio,
+      horaInicio: String(act.horaInicio || '').trim()
     };
   }
 
@@ -184,20 +180,39 @@
       }
     }
 
-    if (a.horaInicio && !esHoraValida(a.horaInicio)) e.horaInicio = 'La hora de inicio no es válida.';
-    if (!a.horaInicio && act.horaFin) e.horaFin = 'Para poner hora final, indica primero la hora de inicio.';
-    if (a.horaFin) {
-      if (!esHoraValida(a.horaFin)) e.horaFin = 'La hora final no es válida.';
-      else if (!e.horaInicio && esHoraValida(a.horaInicio) && aMinutos(a.horaFin) <= aMinutos(a.horaInicio)) {
-        e.horaFin = 'La hora final debe ser posterior a la de inicio.';
-      }
-    }
-
-    if (a.responsable.length > MAX_RESPONSABLE) {
-      e.responsable = 'El responsable puede tener máximo ' + MAX_RESPONSABLE + ' caracteres.';
-    }
+    if (a.horaInicio && !esHoraValida(a.horaInicio)) e.horaInicio = 'La hora no es válida.';
 
     return { ok: Object.keys(e).length === 0, errores: e };
+  }
+
+  /**
+   * Valida un lote de filas del formulario (todas de la misma área).
+   * fila: { inicio, titulo, varios (bool), fin, horaInicio }
+   * Las filas sin nombre, sin hora y sin "varios días" se ignoran.
+   * Devuelve { ok, actividades: [{ fila, actividad }], errores: { fila: {campo: msg} }, general }.
+   */
+  function validarLote(area, filas, opciones) {
+    var op = opciones || {};
+    var r = { ok: false, actividades: [], errores: {}, general: '' };
+    filas.forEach(function (f, i) {
+      var titulo = String(f.titulo || '').trim();
+      if (!titulo && !f.horaInicio && !f.varios) return; // fila vacía
+      var act = normalizar({
+        area: area, titulo: titulo, inicio: f.inicio,
+        fin: f.varios ? f.fin : f.inicio, horaInicio: f.horaInicio
+      });
+      var v = validar(act, op);
+      var e = v.errores;
+      if (f.varios && !String(f.fin || '').trim()) e.fin = 'Indica la fecha final.';
+      if (e.area) { r.general = e.area; delete e.area; }
+      if (Object.keys(e).length) r.errores[i] = e;
+      else r.actividades.push({ fila: i, actividad: act });
+    });
+    if (!r.general && !r.actividades.length && !Object.keys(r.errores).length) {
+      r.general = 'Escribe al menos una actividad.';
+    }
+    r.ok = !r.general && !Object.keys(r.errores).length;
+    return r;
   }
 
   /** ¿La actividad ocurre (total o parcialmente) en ese día? */
@@ -210,7 +225,7 @@
     return act.inicio <= hasta && (act.fin || act.inicio) >= desde;
   }
 
-  /** Orden: primero "todo el día", luego por hora, luego por nombre. */
+  /** Orden: primero las que no tienen hora, luego por hora, luego por nombre. */
   function comparar(x, y) {
     var hx = x.horaInicio || '', hy = y.horaInicio || '';
     if (!hx !== !hy) return hx ? 1 : -1;
@@ -228,19 +243,17 @@
   /* Cruces                                                              */
   /* ------------------------------------------------------------------ */
 
-  /** Intervalo en minutos [ini, fin) de una actividad con hora, o null. */
+  /** Intervalo en minutos [ini, ini + 1 h) de una actividad con hora, o null. */
   function intervalo(act) {
     if (!act.horaInicio || !esHoraValida(act.horaInicio)) return null;
     var ini = aMinutos(act.horaInicio);
-    var fin = act.horaFin && esHoraValida(act.horaFin) ? aMinutos(act.horaFin) : ini + 60;
-    if (fin <= ini) fin = ini + 60;
-    return [ini, fin];
+    return [ini, ini + DURACION_CRUCE];
   }
 
   /**
    * Busca cruces de `act` con las actividades de `lista`.
    * - Sin hora: no hay cruces.
-   * - Sin hora final: se asume 1 hora.
+   * - Cada actividad con hora se asume de 1 hora.
    * - Solo tocarse en el borde no es cruce.
    * - Una actividad no se cruza consigo misma (mismo id).
    * La franja horaria se aplica en cada día que abarca la actividad.
@@ -256,101 +269,6 @@
       if (!(otra.inicio <= fin1 && (otra.fin || otra.inicio) >= act.inicio)) return false;
       return i1[0] < i2[1] && i2[0] < i1[1];
     }).sort(comparar);
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Repeticiones                                                        */
-  /* ------------------------------------------------------------------ */
-
-  /**
-   * Fechas de inicio de una repetición.
-   * regla semanal: { tipo: 'semanal', dias: [0..6], cada: 1-4, hasta }
-   * regla mensual: { tipo: 'mensual', dia: 1-31, finDeSemana: 'omitir'|'lunes'|'viernes', hasta }
-   * Devuelve { fechas, error }. La primera fecha nunca es anterior a `inicio`.
-   */
-  function generarRepeticion(inicio, regla) {
-    if (!esFechaValida(inicio)) return { fechas: [], error: 'La fecha de inicio no es válida.' };
-    if (!regla || !esFechaValida(regla.hasta)) return { fechas: [], error: 'Indica hasta qué fecha se repite.' };
-    if (regla.hasta < inicio) return { fechas: [], error: 'La fecha "hasta" no puede ser anterior a la de inicio.' };
-    var maximo = sumarAnios(inicio, 1);
-    if (regla.hasta > maximo) {
-      return { fechas: [], error: 'La repetición puede ir máximo un año hacia adelante (hasta el ' + formatoFechaCorta(maximo) + ').' };
-    }
-
-    var fechas = [];
-    if (regla.tipo === 'semanal') {
-      var dias = (regla.dias || []).filter(function (d) { return d >= 0 && d <= 6; });
-      var cada = Math.floor(+regla.cada || 1);
-      if (!dias.length) return { fechas: [], error: 'Elige al menos un día de la semana.' };
-      if (cada < 1 || cada > 4) return { fechas: [], error: 'La repetición semanal va de cada 1 a cada 4 semanas.' };
-      var lunes0 = inicioSemana(inicio);
-      for (var dia = inicio; dia <= regla.hasta; dia = sumarDias(dia, 1)) {
-        var semana = Math.floor(diferenciaDias(lunes0, dia) / 7);
-        if (semana % cada === 0 && dias.indexOf(diaSemana(dia)) !== -1) fechas.push(dia);
-        if (fechas.length > LIMITE_REPETICIONES) break;
-      }
-    } else if (regla.tipo === 'mensual') {
-      var diaMes = Math.floor(+regla.dia);
-      if (!(diaMes >= 1 && diaMes <= 31)) return { fechas: [], error: 'Elige un día del mes entre 1 y 31.' };
-      var modo = regla.finDeSemana || 'omitir';
-      if (['omitir', 'lunes', 'viernes'].indexOf(modo) === -1) return { fechas: [], error: 'Opción de fin de semana no válida.' };
-      var f0 = leerFecha(inicio);
-      for (var k = 0; ; k++) {
-        var mes = sumarMeses(f0.a, f0.m, k);
-        var primero = aTexto(mes.a, mes.m, 1);
-        if (primero > regla.hasta) break;
-        var fecha = aTexto(mes.a, mes.m, Math.min(diaMes, diasDelMes(mes.a, mes.m)));
-        var ds = diaSemana(fecha);
-        if (ds >= 5) {
-          if (modo === 'omitir') continue;
-          fecha = modo === 'lunes' ? sumarDias(fecha, 7 - ds) : sumarDias(fecha, 4 - ds);
-        }
-        if (fecha >= inicio && fecha <= regla.hasta) fechas.push(fecha);
-        if (fechas.length > LIMITE_REPETICIONES) break;
-      }
-    } else {
-      return { fechas: [], error: 'Tipo de repetición no válido.' };
-    }
-
-    if (fechas.length > LIMITE_REPETICIONES) {
-      return { fechas: [], error: 'Se crearían más de ' + LIMITE_REPETICIONES + ' actividades. Acorta la repetición.' };
-    }
-    if (!fechas.length) return { fechas: [], error: 'Con estas opciones no se crea ninguna actividad.' };
-    return { fechas: fechas, error: '' };
-  }
-
-  /** Suma años conservando el día (29-feb pasa a 28-feb si hace falta). */
-  function sumarAnios(texto, n) {
-    var f = leerFecha(texto);
-    var a = f.a + n;
-    return aTexto(a, f.m, Math.min(f.d, diasDelMes(a, f.m)));
-  }
-
-  /**
-   * Expande una actividad base en una actividad por fecha, conservando la
-   * duración en días. Todas comparten el mismo identificador de serie.
-   */
-  function expandirSerie(base, fechas, serie) {
-    var duracion = diferenciaDias(base.inicio, base.fin || base.inicio);
-    return fechas.map(function (f) {
-      var a = normalizar(base);
-      a.inicio = f;
-      a.fin = sumarDias(f, duracion);
-      a.serie = serie;
-      return a;
-    });
-  }
-
-  /**
-   * Qué actividades de una serie se eliminan.
-   * modo: 'solo' | 'siguientes' | 'serie'
-   */
-  function seleccionarSerie(lista, act, modo) {
-    if (modo === 'solo' || !act.serie) return lista.filter(function (x) { return x.id === act.id; });
-    return lista.filter(function (x) {
-      if (x.serie !== act.serie) return false;
-      return modo === 'serie' || x.inicio >= act.inicio;
-    });
   }
 
   /* ------------------------------------------------------------------ */
@@ -391,11 +309,9 @@
     return h12 + ':' + min + ' ' + sufijo;
   }
 
-  /** "8:00 a. m. – 9:30 a. m.", "Desde 8:00 a. m." o "Todo el día". */
+  /** "8:00 a. m." o texto vacío si la actividad no tiene hora. */
   function formatoHorario(act) {
-    if (!act.horaInicio) return 'Todo el día';
-    if (!act.horaFin) return formatoHora(act.horaInicio);
-    return formatoHora(act.horaInicio) + ' – ' + formatoHora(act.horaFin);
+    return act.horaInicio ? formatoHora(act.horaInicio) : '';
   }
 
   /** "Del 3 al 6 de noviembre", "Del 28 de noviembre al 2 de diciembre". */
@@ -407,15 +323,6 @@
     return 'Del ' + a.d + ' al ' + b.d + ' de ' + nombreMes(a.m) + ' de ' + a.a;
   }
 
-  /** Texto de vista previa de una repetición. */
-  function textoVistaPrevia(fechas) {
-    if (!fechas.length) return '';
-    var n = fechas.length;
-    if (n === 1) return 'Se creará 1 actividad, el ' + formatoFechaLarga(fechas[0]) + '.';
-    return 'Se crearán ' + n + ' actividades, desde el ' + formatoFechaLarga(fechas[0]) +
-      ' hasta el ' + formatoFechaLarga(fechas[n - 1]) + '.';
-  }
-
   /** Identificador corto y aleatorio. */
   function nuevoId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -423,21 +330,20 @@
 
   var API = {
     MESES: MESES, DIAS: DIAS, DIAS_CORTOS: DIAS_CORTOS,
-    LIMITE_REPETICIONES: LIMITE_REPETICIONES, MAX_TITULO: MAX_TITULO, MAX_RESPONSABLE: MAX_RESPONSABLE,
+    MAX_TITULO: MAX_TITULO,
     aTexto: aTexto, leerFecha: leerFecha, esFechaValida: esFechaValida,
     diasDelMes: diasDelMes, sumarDias: sumarDias, diferenciaDias: diferenciaDias,
     diaSemana: diaSemana, esFinDeSemana: esFinDeSemana, inicioSemana: inicioSemana,
-    diasDeSemana: diasDeSemana, rangoDias: rangoDias, sumarMeses: sumarMeses, sumarAnios: sumarAnios,
+    diasDeSemana: diasDeSemana, rangoDias: rangoDias, sumarMeses: sumarMeses,
     matrizMes: matrizMes, hoy: hoy,
     esHoraValida: esHoraValida, aMinutos: aMinutos,
-    normalizar: normalizar, validar: validar, ocurreEn: ocurreEn, tocaRango: tocaRango,
+    normalizar: normalizar, validar: validar, validarLote: validarLote, ocurreEn: ocurreEn, tocaRango: tocaRango,
     comparar: comparar, actividadesDelDia: actividadesDelDia,
     buscarCruces: buscarCruces,
-    generarRepeticion: generarRepeticion, expandirSerie: expandirSerie, seleccionarSerie: seleccionarSerie,
     nombreMes: nombreMes, mayuscula: mayuscula, formatoMes: formatoMes,
     formatoFechaLarga: formatoFechaLarga, formatoFechaCorta: formatoFechaCorta, formatoDiaMes: formatoDiaMes,
     formatoHora: formatoHora, formatoHorario: formatoHorario, formatoRango: formatoRango,
-    textoVistaPrevia: textoVistaPrevia, nuevoId: nuevoId
+    nuevoId: nuevoId
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
