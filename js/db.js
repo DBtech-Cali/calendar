@@ -267,7 +267,12 @@
               if ((a.fin || a.inicio) >= desde) lista.push(a);
             });
             alRecibir(lista);
-          }, function (err) { if (alFallar) alFallar(new Error(mensajeDeError(err))); });
+          }, function (err) {
+            if (!alFallar) return;
+            alFallar(new Error(err && err.code === 'permission-denied'
+              ? 'La base de datos no permite leer. Revisa que las reglas de firestore.rules estén publicadas en Firebase.'
+              : mensajeDeError(err)));
+          });
       },
 
       haySesion: function () { return !!usuario; },

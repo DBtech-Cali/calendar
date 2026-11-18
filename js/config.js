@@ -24,11 +24,18 @@ window.CCDB_CONFIG = {
    *   appId: '…'
    * },
    */
-  firebase: null,
+  firebase: {
+    apiKey: 'AIzaSyB7-XaZVkWZWGnrRN5jJTNdwZEq0xfRY_o',
+    authDomain: 'calendar-e5750.firebaseapp.com',
+    projectId: 'calendar-e5750',
+    storageBucket: 'calendar-e5750.firebasestorage.app',
+    messagingSenderId: '203533831911',
+    appId: '1:203533831911:web:afd6025c483f05784adc42'
+  },
 
   /* Correo de la cuenta única de edición (no se muestra en la pantalla).
    * Debe coincidir con el correo escrito en firestore.rules. */
-  correoEdicion: '',
+  correoEdicion: 'ccdb@gmail.com',
 
   /* Versión fijada del SDK de Firebase (compat) que se carga desde gstatic. */
   versionFirebase: '10.14.1',

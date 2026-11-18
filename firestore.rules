@@ -6,16 +6,16 @@ rules_version = '2';
 // - Solo la cuenta única de edición puede crear, modificar o eliminar.
 // - Se valida el esquema de cada actividad.
 //
-// IMPORTANTE: reemplaza CORREO_DE_EDICION@ejemplo.org por el mismo correo
-// que escribiste en js/config.js (correoEdicion). Si cambias las áreas en
-// config.js, actualiza también la lista de ids de áreas aquí abajo.
+// El correo de esEditor() debe ser el mismo de js/config.js (correoEdicion).
+// Si cambias las áreas en config.js, actualiza también la lista de ids de
+// áreas aquí abajo.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function esEditor() {
       return request.auth != null
-        && request.auth.token.email == 'CORREO_DE_EDICION@ejemplo.org';
+        && request.auth.token.email == 'ccdb@gmail.com';
     }
 
     function areasValidas() {
