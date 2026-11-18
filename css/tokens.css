@@ -12,14 +12,14 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../assets/fonts/CalSans-Regular-latin.woff2?v=2026111802') format('woff2');
+  src: url('../assets/fonts/CalSans-Regular-latin.woff2?v=2026111803') format('woff2');
 }
 @font-face {
   font-family: 'Urbanist';
   font-style: normal;
   font-weight: 100 900; /* fuente variable: un solo archivo para todos los pesos */
   font-display: swap;
-  src: url('../assets/fonts/Urbanist-variable-latin.woff2?v=2026111802') format('woff2');
+  src: url('../assets/fonts/Urbanist-variable-latin.woff2?v=2026111803') format('woff2');
 }
 
 :root {

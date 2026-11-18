@@ -343,6 +343,15 @@
     return 'Del ' + a.d + ' al ' + b.d + ' de ' + nombreMes(a.m);
   }
 
+  /** "del 3 al 7 nov", "del 28 nov al 2 dic" (para ir en la misma línea). */
+  function formatoRangoBreve(inicio, fin) {
+    var a = leerFecha(inicio), b = leerFecha(fin);
+    var mes = function (f) { return nombreMes(f.m).slice(0, 3); };
+    if (a.a !== b.a) return 'del ' + a.d + ' ' + mes(a) + ' ' + a.a + ' al ' + b.d + ' ' + mes(b) + ' ' + b.a;
+    if (a.m !== b.m) return 'del ' + a.d + ' ' + mes(a) + ' al ' + b.d + ' ' + mes(b);
+    return 'del ' + a.d + ' al ' + b.d + ' ' + mes(a);
+  }
+
   /**
    * Horas para elegir: desde y hasta ("HH:MM"), cada n minutos.
    * opcionesHora('07:00', '17:00', 30) → ['07:00', '07:30', …, '17:00']
@@ -375,7 +384,7 @@
     nombreMes: nombreMes, mayuscula: mayuscula, formatoMes: formatoMes,
     formatoFechaLarga: formatoFechaLarga, formatoFechaCorta: formatoFechaCorta, formatoDiaMes: formatoDiaMes,
     formatoHora: formatoHora, formatoHorario: formatoHorario, formatoRango: formatoRango,
-    formatoRangoCorto: formatoRangoCorto, opcionesHora: opcionesHora,
+    formatoRangoCorto: formatoRangoCorto, formatoRangoBreve: formatoRangoBreve, opcionesHora: opcionesHora,
     nuevoId: nuevoId
   };
 

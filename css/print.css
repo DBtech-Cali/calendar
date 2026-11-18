@@ -32,5 +32,5 @@ body { background: var(--blanco); font-size: 10pt; }
 .cabecera__titulos { padding: 0 0 0 4mm; }
 .logo-zona { padding: 19px 19px 19px 0; }
 
-.semana__grilla { grid-template-columns: repeat(7, 1fr) !important; gap: 2mm; }
+.semana__grilla { grid-template-columns: var(--columnas-semana) !important; gap: 2mm; }
 .columna { border: 1px solid var(--greige); }

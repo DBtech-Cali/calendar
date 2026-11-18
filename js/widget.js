@@ -107,7 +107,10 @@
 
     var cont = $('w-dias');
     cont.textContent = '';
-    cont.style.setProperty('--columnas', String(dias.length));
+    // El domingo, más angosto (casi nunca tiene actividades).
+    cont.style.setProperty('--plantilla', dias.map(function (d) {
+      return L.diaSemana(d) === 6 ? 'minmax(0, .5fr)' : 'minmax(0, 1fr)';
+    }).join(' '));
     dias.forEach(function (dia) {
       var delDia = L.actividadesDelDia(lista, dia);
       var fd = L.leerFecha(dia);
@@ -126,14 +129,16 @@
       var ul = el('ul', { clase: 'w-lista' });
       if (!delDia.length) ul.appendChild(el('li', { clase: 'w-vacio', texto: 'Sin actividades' }));
       delDia.forEach(function (a) {
-        // Primero el área y enseguida la actividad; la hora solo si existe.
+        // Todo en una misma línea: ÁREA · actividad · hora · fechas (si existen).
+        var varios = a.fin && a.fin !== a.inicio;
         ul.appendChild(el('li', { clase: 'w-act', estilo: '--color-area:' + area(a.area).color }, [
-          el('span', { clase: 'w-act__linea' }, [
-            el('span', { clase: 'w-act__area' }, [punto(a.area), area(a.area).corto || area(a.area).nombre]),
-            ' ',
-            el('span', { clase: 'w-act__titulo', texto: a.titulo })
-          ]),
-          a.horaInicio ? el('span', { clase: 'w-act__hora', texto: L.formatoHora(a.horaInicio) }) : null
+          el('span', { clase: 'w-act__area' }, [punto(a.area), area(a.area).corto || area(a.area).nombre]),
+          ' ',
+          el('span', { clase: 'w-act__titulo', texto: a.titulo }),
+          a.horaInicio ? ' ' : null,
+          a.horaInicio ? el('span', { clase: 'w-act__hora', texto: L.formatoHora(a.horaInicio) }) : null,
+          varios ? ' ' : null,
+          varios ? el('span', { clase: 'w-act__rango', texto: L.formatoRangoBreve(a.inicio, a.fin) }) : null
         ]));
       });
       col.appendChild(ul);

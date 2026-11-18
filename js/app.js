@@ -246,21 +246,22 @@
    */
   function ficha(a, clase) {
     var varios = a.fin && a.fin !== a.inicio;
-    var meta = [];
-    if (varios) meta.push(L.formatoRangoCorto(a.inicio, a.fin));
-    if (a.horaInicio) meta.push(L.formatoHora(a.horaInicio));
-    var etiqueta = area(a.area).nombre + ': ' + a.titulo + (meta.length ? '. ' + meta.join('. ') : '');
+    var hora = a.horaInicio ? L.formatoHora(a.horaInicio) : '';
+    var rango = varios ? L.formatoRangoBreve(a.inicio, a.fin) : '';
+    var etiqueta = area(a.area).nombre + ': ' + a.titulo + (hora ? ', ' + hora : '') + (rango ? ', ' + rango : '');
+    // Todo en una misma línea: ÁREA · actividad · hora · fechas (si existen).
     return el('button', {
       type: 'button', clase: clase, estilo: '--color-area:' + area(a.area).color,
       'aria-label': etiqueta,
       onclick: function () { abrirDetalle(a); }
     }, [
-      el('span', { clase: clase + '__linea' }, [
-        el('span', { clase: clase + '__area' }, [punto(a.area), nombreCorto(a.area)]),
-        ' ',
-        el('span', { clase: clase + '__titulo', texto: a.titulo })
-      ]),
-      meta.length ? el('span', { clase: clase + '__meta', texto: meta.join(' · ') }) : null
+      el('span', { clase: clase + '__area' }, [punto(a.area), nombreCorto(a.area)]),
+      ' ',
+      el('span', { clase: clase + '__titulo', texto: a.titulo }),
+      hora ? ' ' : null,
+      hora ? el('span', { clase: clase + '__hora', texto: hora }) : null,
+      rango ? ' ' : null,
+      rango ? el('span', { clase: clase + '__rango', texto: rango }) : null
     ]);
   }
 
@@ -276,7 +277,7 @@
       var fd = L.leerFecha(dia);
       var esHoy = dia === estado.hoy;
       var col = el('section', {
-        clase: 'columna' + (esHoy ? ' columna--hoy' : ''),
+        clase: 'columna' + (esHoy ? ' columna--hoy' : '') + (i === 6 ? ' columna--domingo' : ''),
         'aria-label': L.mayuscula(L.formatoFechaLarga(dia)) + (esHoy ? ' (hoy)' : '')
       });
       col.appendChild(el('header', { clase: 'columna__cabeza' }, [

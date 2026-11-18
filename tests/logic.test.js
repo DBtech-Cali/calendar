@@ -166,3 +166,9 @@ test('rango corto y horas de la jornada', () => {
   assert.equal(h[h.length - 1], '17:00');
   assert.ok(h.every((x) => /:(00|30)$/.test(x)));
 });
+
+test('rango breve para ir en la misma línea', () => {
+  assert.equal(L.formatoRangoBreve('2026-11-03', '2026-11-07'), 'del 3 al 7 nov');
+  assert.equal(L.formatoRangoBreve('2026-11-28', '2026-12-02'), 'del 28 nov al 2 dic');
+  assert.equal(L.formatoRangoBreve('2026-12-30', '2027-01-02'), 'del 30 dic 2026 al 2 ene 2027');
+});
