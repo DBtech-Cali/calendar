@@ -375,14 +375,14 @@ a { color: var(--rojo-oscuro); text-underline-offset: 3px; }
   font-size: var(--t-mini);
 }
 .fila__campo { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
-.fila input[type='date'], .fila input[type='time'], .fila input[type='text'] {
+.fila input[type='date'], .fila select, .fila input[type='text'] {
   width: 100%; min-height: 44px;
   padding: .4rem .6rem;
   border: 2px solid var(--linea);
   border-radius: var(--radio-sm);
   background: var(--superficie);
 }
-.fila input:hover { border-color: var(--linea-fuerte); }
+.fila input:hover, .fila select:hover { border-color: var(--linea-fuerte); }
 .fila input[aria-invalid='true'] { border-color: var(--error); }
 /* En escritorio las etiquetas van en la cabecera de la tabla. */
 .fila__etiqueta:not(.fila__etiqueta--visible) {
@@ -486,7 +486,7 @@ a { color: var(--rojo-oscuro); text-underline-offset: 3px; }
     font-size: var(--t-mini); font-weight: var(--peso-fuerte);
   }
   .fila__quitar { align-self: end; }
-  .fila input[type='date'], .fila input[type='time'] { padding: .4rem .4rem; }
+  .fila input[type='date'], .fila select { padding: .4rem .4rem; }
   .dialogo { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); }
   .dialogo__cuerpo { padding: 1rem; }
   .dialogo__cabeza { padding-left: 1rem; }

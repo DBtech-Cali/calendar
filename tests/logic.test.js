@@ -136,3 +136,33 @@ test('formulario por lote: errores por fila, área y lote vacío', () => {
   // Una fila sin nombre pero con hora sí se valida (falta el nombre).
   assert.ok(L.validarLote('pastoral', [{ inicio: '2026-11-25', titulo: '', horaInicio: '08:00' }]).errores[0].titulo);
 });
+
+test('calendario general: una actividad de varios días aparece solo el día en que empieza', () => {
+  const visita = act({ id: 'v', inicio: '2026-11-03', fin: '2026-11-07' });
+  const misa = act({ id: 'm', inicio: '2026-11-05' });
+  const primer = '2026-10-26'; // primer día de la cuadrícula de noviembre
+  const dias = L.rangoDias(primer, 42).filter((d) => L.actividadesQueInician([visita], d, primer).length);
+  assert.deepEqual(dias, ['2026-11-03']);
+  assert.deepEqual(L.actividadesQueInician([visita, misa], '2026-11-05', primer).map((a) => a.id), ['m']);
+  // En el widget sí aparece en cada día.
+  assert.equal(L.rangoDias('2026-11-02', 7).filter((d) => L.actividadesDelDia([visita], d).length).length, 5);
+});
+
+test('calendario general: si empezó antes de lo visible, aparece el primer día visible', () => {
+  const larga = act({ id: 'l', inicio: '2026-10-20', fin: '2026-10-28' });
+  assert.equal(L.actividadesQueInician([larga], '2026-10-26', '2026-10-26').length, 1);
+  assert.equal(L.actividadesQueInician([larga], '2026-10-27', '2026-10-26').length, 0);
+  // Ya terminó antes de lo visible: no aparece.
+  assert.equal(L.actividadesQueInician([act({ inicio: '2026-10-01', fin: '2026-10-05' })], '2026-10-26', '2026-10-26').length, 0);
+});
+
+test('rango corto y horas de la jornada', () => {
+  assert.equal(L.formatoRangoCorto('2026-11-03', '2026-11-07'), 'Del 3 al 7 de noviembre');
+  assert.equal(L.formatoRangoCorto('2026-11-28', '2026-12-02'), 'Del 28 de noviembre al 2 de diciembre');
+  assert.equal(L.formatoRangoCorto('2026-12-30', '2027-01-02'), 'Del 30 de diciembre de 2026 al 2 de enero de 2027');
+  const h = L.opcionesHora('07:00', '17:00', 30);
+  assert.equal(h.length, 21);
+  assert.deepEqual(h.slice(0, 3), ['07:00', '07:30', '08:00']);
+  assert.equal(h[h.length - 1], '17:00');
+  assert.ok(h.every((x) => /:(00|30)$/.test(x)));
+});

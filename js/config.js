@@ -36,6 +36,10 @@ window.CCDB_CONFIG = {
   /* Duración máxima de una actividad, en días. */
   maxDiasDuracion: 60,
 
+  /* Horas que se pueden elegir en el formulario (la hora es opcional).
+   * Jornada laboral, cada 30 minutos: 7:00 a. m., 7:30 a. m. … 5:00 p. m. */
+  horario: { desde: '07:00', hasta: '17:00', cadaMinutos: 30 },
+
   /* Textos institucionales. */
   institucion: {
     nombreApp: 'Cronograma institucional',

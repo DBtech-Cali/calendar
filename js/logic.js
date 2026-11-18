@@ -234,6 +234,18 @@
     return String(x.titulo).localeCompare(String(y.titulo), 'es');
   }
 
+  /**
+   * Actividades que se MUESTRAN en un día del calendario general (mes y
+   * semana): cada actividad aparece una sola vez, el día en que empieza.
+   * Si empezó antes del primer día visible, aparece en ese primer día.
+   */
+  function actividadesQueInician(lista, dia, primerDiaVisible) {
+    return lista.filter(function (a) {
+      if (a.inicio === dia) return true;
+      return dia === primerDiaVisible && a.inicio < dia && (a.fin || a.inicio) >= dia;
+    }).sort(comparar);
+  }
+
   /** Actividades de un día, ordenadas. */
   function actividadesDelDia(lista, dia) {
     return lista.filter(function (a) { return ocurreEn(a, dia); }).sort(comparar);
@@ -323,6 +335,26 @@
     return 'Del ' + a.d + ' al ' + b.d + ' de ' + nombreMes(a.m) + ' de ' + a.a;
   }
 
+  /** "Del 3 al 7 de noviembre" (sin año, salvo que cambie de año). */
+  function formatoRangoCorto(inicio, fin) {
+    var a = leerFecha(inicio), b = leerFecha(fin);
+    if (a.a !== b.a) return 'Del ' + formatoDiaMes(inicio, true) + ' al ' + formatoDiaMes(fin, true);
+    if (a.m !== b.m) return 'Del ' + formatoDiaMes(inicio) + ' al ' + formatoDiaMes(fin);
+    return 'Del ' + a.d + ' al ' + b.d + ' de ' + nombreMes(a.m);
+  }
+
+  /**
+   * Horas para elegir: desde y hasta ("HH:MM"), cada n minutos.
+   * opcionesHora('07:00', '17:00', 30) → ['07:00', '07:30', …, '17:00']
+   */
+  function opcionesHora(desde, hasta, cadaMinutos) {
+    var r = [], paso = cadaMinutos || 30;
+    for (var m = aMinutos(desde); m <= aMinutos(hasta); m += paso) {
+      r.push(dos(Math.floor(m / 60)) + ':' + dos(m % 60));
+    }
+    return r;
+  }
+
   /** Identificador corto y aleatorio. */
   function nuevoId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -338,11 +370,12 @@
     matrizMes: matrizMes, hoy: hoy,
     esHoraValida: esHoraValida, aMinutos: aMinutos,
     normalizar: normalizar, validar: validar, validarLote: validarLote, ocurreEn: ocurreEn, tocaRango: tocaRango,
-    comparar: comparar, actividadesDelDia: actividadesDelDia,
+    comparar: comparar, actividadesDelDia: actividadesDelDia, actividadesQueInician: actividadesQueInician,
     buscarCruces: buscarCruces,
     nombreMes: nombreMes, mayuscula: mayuscula, formatoMes: formatoMes,
     formatoFechaLarga: formatoFechaLarga, formatoFechaCorta: formatoFechaCorta, formatoDiaMes: formatoDiaMes,
     formatoHora: formatoHora, formatoHorario: formatoHorario, formatoRango: formatoRango,
+    formatoRangoCorto: formatoRangoCorto, opcionesHora: opcionesHora,
     nuevoId: nuevoId
   };
 

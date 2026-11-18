@@ -7,9 +7,9 @@
   <meta name="description" content="Actividades de todas las áreas del Centro de Capacitación Don Bosco en un solo calendario.">
   <meta name="theme-color" content="#fcecd7">
   <link rel="icon" type="image/png" href="assets/logos/LOGOS 2025 - FULLCOLOR - VERTICAL.png">
-  <link rel="stylesheet" href="css/tokens.css?v=20261118">
-  <link rel="stylesheet" href="css/app.css?v=20261118">
-  <link rel="stylesheet" href="css/print.css?v=20261118" media="print">
+  <link rel="stylesheet" href="css/tokens.css?v=2026111802">
+  <link rel="stylesheet" href="css/app.css?v=2026111802">
+  <link rel="stylesheet" href="css/print.css?v=2026111802" media="print">
 </head>
 <body>
   <a class="saltar" href="#calendario">Saltar al calendario</a>
@@ -131,7 +131,7 @@
           </div>
           <ol class="filas__lista" id="filas"></ol>
           <button type="button" class="boton boton--pequeno boton--agregar-fila" id="btn-agregar-fila">+ Agregar otra actividad</button>
-          <p class="campo__ayuda" id="ayuda-filas">Consejo: al terminar de escribir una actividad, pulsa Enter para pasar a la siguiente fila.</p>
+          <p class="campo__ayuda" id="ayuda-filas">Llena solo las filas que necesites; las vacías se omiten. Pulsa Enter para pasar a la siguiente fila.</p>
         </div>
 
         <div class="aviso-cruce" id="aviso-cruce" role="status" aria-live="polite" hidden></div>
@@ -163,7 +163,7 @@
       </div>
       <div class="fila__campo fila__campo--hora">
         <label class="fila__etiqueta" data-para="horaInicio">Hora</label>
-        <input type="time" data-campo="horaInicio">
+        <select data-campo="horaInicio"></select>
       </div>
       <div class="fila__quitar">
         <button type="button" class="boton boton--icono boton--quitar" data-quitar><span aria-hidden="true">×</span></button>
@@ -215,9 +215,9 @@
 
   <div class="notificacion" id="notificacion" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20261118"></script>
-  <script src="js/logic.js?v=20261118"></script>
-  <script src="js/db.js?v=20261118"></script>
-  <script src="js/app.js?v=20261118"></script>
+  <script src="js/config.js?v=2026111802"></script>
+  <script src="js/logic.js?v=2026111802"></script>
+  <script src="js/db.js?v=2026111802"></script>
+  <script src="js/app.js?v=2026111802"></script>
 </body>
 </html>

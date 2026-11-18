@@ -200,15 +200,16 @@
     var grilla = el('div', { clase: 'mes__grilla', estilo: '--filas:' + semanas.length });
     semanas.forEach(function (semana) {
       semana.forEach(function (dia) {
-        grilla.appendChild(celdaMes(dia, f.m, lista));
+        grilla.appendChild(celdaMes(dia, f.m, lista, semanas[0][0]));
       });
     });
     cont.appendChild(grilla);
   }
 
-  function celdaMes(dia, mesVisible, lista) {
+  function celdaMes(dia, mesVisible, lista, primerDia) {
     var fd = L.leerFecha(dia);
-    var delDia = L.actividadesDelDia(lista, dia);
+    // Las de varios días se muestran una sola vez, el día en que empiezan.
+    var delDia = L.actividadesQueInician(lista, dia, primerDia);
     var clases = ['celda'];
     if (fd.m !== mesVisible) clases.push('celda--fuera');
     if (dia === estado.hoy) clases.push('celda--hoy');
@@ -246,8 +247,8 @@
   function ficha(a, clase) {
     var varios = a.fin && a.fin !== a.inicio;
     var meta = [];
+    if (varios) meta.push(L.formatoRangoCorto(a.inicio, a.fin));
     if (a.horaInicio) meta.push(L.formatoHora(a.horaInicio));
-    if (varios && clase === 'tarjeta') meta.push(L.formatoRango(a.inicio, a.fin));
     var etiqueta = area(a.area).nombre + ': ' + a.titulo + (meta.length ? '. ' + meta.join('. ') : '');
     return el('button', {
       type: 'button', clase: clase, estilo: '--color-area:' + area(a.area).color,
@@ -271,7 +272,7 @@
     cont.textContent = '';
     var grilla = el('div', { clase: 'semana__grilla' });
     dias.forEach(function (dia, i) {
-      var delDia = L.actividadesDelDia(lista, dia);
+      var delDia = L.actividadesQueInician(lista, dia, dias[0]);
       var fd = L.leerFecha(dia);
       var esHoy = dia === estado.hoy;
       var col = el('section', {
@@ -341,8 +342,8 @@
     $('dlg-dia-titulo').textContent = L.mayuscula(L.formatoFechaLarga(dia));
     var ul = $('dlg-dia-lista');
     ul.textContent = '';
-    var delDia = L.actividadesDelDia(visibles(), dia);
-    if (!delDia.length) ul.appendChild(el('li', { clase: 'vacio', texto: 'No hay actividades este día.' }));
+    var delDia = L.actividadesQueInician(visibles(), dia, rangoVisible().desde);
+    if (!delDia.length) ul.appendChild(el('li', { clase: 'vacio', texto: 'No hay actividades que empiecen este día.' }));
     delDia.forEach(function (a) { ul.appendChild(el('li', null, [ficha(a, 'tarjeta')])); });
   }
 
@@ -407,6 +408,7 @@
   var CAMPOS_FILA = ['inicio', 'titulo', 'varios', 'fin', 'horaInicio'];
   var NOMBRES_CAMPO = { inicio: 'Fecha', titulo: 'Actividad', fin: 'Fecha final', horaInicio: 'Hora' };
   var contadorFilas = 0;
+  var FILAS_INICIALES = 5;
 
   function filas() { return Array.prototype.slice.call($('filas').children); }
   function campo(fila, nombre) { return fila.querySelector('[data-campo="' + nombre + '"]'); }
@@ -426,6 +428,7 @@
     var v = valores || {};
     var fila = $('plantilla-fila').content.firstElementChild.cloneNode(true);
     var n = ++contadorFilas;
+    llenarHoras(campo(fila, 'horaInicio'), v.horaInicio || '');
     CAMPOS_FILA.forEach(function (c) {
       var input = campo(fila, c);
       input.id = 'fila' + n + '-' + c;
@@ -442,6 +445,15 @@
     $('filas').appendChild(fila);
     numerarFilas();
     return fila;
+  }
+
+  /** Lista de horas de la jornada (opcional). Conserva una hora antigua que no esté en la lista. */
+  var HORAS = L.opcionesHora(C.horario.desde, C.horario.hasta, C.horario.cadaMinutos);
+  function llenarHoras(select, actual) {
+    select.appendChild(el('option', { value: '', texto: 'Sin hora' }));
+    var horas = HORAS.slice();
+    if (actual && horas.indexOf(actual) === -1) { horas.push(actual); horas.sort(); }
+    horas.forEach(function (h) { select.appendChild(el('option', { value: h, texto: L.formatoHora(h) })); });
   }
 
   /** Etiquetas accesibles con el número de fila ("Actividad 2"). */
@@ -488,7 +500,8 @@
     if (act) {
       agregarFila({ inicio: act.inicio, titulo: act.titulo, varios: act.fin && act.fin !== act.inicio, fin: act.fin !== act.inicio ? act.fin : '', horaInicio: act.horaInicio });
     } else {
-      agregarFila({ inicio: dia || '' });
+      // Cinco filas listas; las que queden vacías se omiten al guardar.
+      for (var k = 0; k < FILAS_INICIALES; k++) agregarFila({ inicio: dia || '' });
     }
     $('btn-agregar-fila').hidden = !nueva;
     $('ayuda-filas').hidden = !nueva;
