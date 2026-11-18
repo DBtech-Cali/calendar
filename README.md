@@ -208,6 +208,7 @@ En la vista de mes, usa **Imprimir** del navegador (Ctrl + P). Se ocultan los bo
   ```
 
   Cubren fechas, la matriz del mes, cruces, validaciones y el formulario por filas.
+- **Al publicar cambios en el código:** en `index.html`, `widget.html` y `css/tokens.css` los archivos llevan `?v=AAAAMMDD` al final (por ejemplo `js/app.js?v=20261118`). Cambia ese número en los tres archivos cada vez que modifiques CSS o JavaScript. Así el navegador descarga los archivos nuevos en lugar de mezclarlos con los viejos que tiene guardados, lo que haría que la aplicación no cargue. Si alguien sigue viendo la versión anterior, basta con recargar con **Ctrl + F5**.
 - No hay dependencias ni paso de compilación. El SDK de Firebase (versión fijada en `versionFirebase` de `js/config.js`) se carga desde `gstatic.com` solo si hay configuración.
 - Todos los textos están en español de Colombia.
 
