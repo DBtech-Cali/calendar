@@ -31,16 +31,14 @@ service cloud.firestore {
       return v is string && (v == '' || v.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'));
     }
 
+    // Actividad: titulo, area, inicio, fin, horaInicio (opcional) y actualizado.
     function actividadValida(a) {
-      return a.keys().hasOnly(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'horaFin', 'responsable', 'serie', 'actualizado'])
-        && a.keys().hasAll(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'horaFin', 'responsable', 'serie', 'actualizado'])
+      return a.keys().hasOnly(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'actualizado'])
+        && a.keys().hasAll(['titulo', 'area', 'inicio', 'fin', 'horaInicio', 'actualizado'])
         && a.titulo is string && a.titulo.size() > 0 && a.titulo.size() <= 140
         && a.area in areasValidas()
         && esFecha(a.inicio) && esFecha(a.fin) && a.fin >= a.inicio
-        && esHoraOVacio(a.horaInicio) && esHoraOVacio(a.horaFin)
-        && (a.horaFin == '' || (a.horaInicio != '' && a.horaFin > a.horaInicio))
-        && a.responsable is string && a.responsable.size() <= 80
-        && a.serie is string && a.serie.size() <= 60
+        && esHoraOVacio(a.horaInicio)
         && a.actualizado == request.time;
     }
 

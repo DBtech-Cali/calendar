@@ -13,14 +13,14 @@
  *   suscribir(desde, hasta, alRecibir, alFallar) → función para cancelar
  *   haySesion(), alCambiarSesion(fn), ingresar(clave), salir()
  *   crear(actividades), actualizar(id, datos), eliminar(ids)
- *   consultar(desde, hasta), actividadesDeSerie(serie)
+ *   consultar(desde, hasta)
  */
 (function (raiz) {
   'use strict';
 
   var L = raiz.CCDBLogic;
   var COLECCION = 'actividades';
-  var CLAVE_DATOS = 'ccdb-cronograma-demo-v1';
+  var CLAVE_DATOS = 'ccdb-cronograma-demo-v2';
   var CLAVE_SESION = 'ccdb-cronograma-demo-sesion';
   var CLAVE_DEMO = 'demo';
   var MARGEN_DIAS = 60; // para traer actividades largas que empezaron antes del rango
@@ -41,53 +41,40 @@
 
   function limpiar(act) {
     var a = L.normalizar(act);
-    return {
-      titulo: a.titulo, area: a.area, inicio: a.inicio, fin: a.fin,
-      horaInicio: a.horaInicio, horaFin: a.horaFin, responsable: a.responsable, serie: a.serie
-    };
+    return { titulo: a.titulo, area: a.area, inicio: a.inicio, fin: a.fin, horaInicio: a.horaInicio };
   }
 
   /* ================================================================== */
   /* Modo demostración                                                   */
   /* ================================================================== */
 
-  /** Actividades inventadas alrededor del mes actual. */
+  /** Actividades inventadas alrededor de la semana actual. */
   function datosDeEjemplo() {
-    var hoy = L.hoy();
-    var f = L.leerFecha(hoy);
-    var lunes = L.inicioSemana(hoy);
+    var lunes = L.inicioSemana(L.hoy());
     var d = function (n) { return L.sumarDias(lunes, n); };
     var lista = [
-      { titulo: 'Reunión de líderes de proceso', area: 'administracion', inicio: d(0), horaInicio: '08:00', horaFin: '09:30', responsable: 'Coordinación administrativa' },
-      { titulo: 'Eucaristía de inicio de semana', area: 'pastoral', inicio: d(0), horaInicio: '07:00', horaFin: '07:45' },
-      { titulo: 'Visita inspectorial', area: 'inspectorial', inicio: d(1), fin: d(4), responsable: 'Equipo inspectorial' },
-      { titulo: 'Capacitación en primeros auxilios', area: 'sst', inicio: d(2), horaInicio: '14:00', horaFin: '16:00', responsable: 'Brigada de emergencias' },
-      { titulo: 'Comité de convivencia', area: 'gestion-humana', inicio: d(2), horaInicio: '15:00', horaFin: '16:00' },
-      { titulo: 'Ensayo de la banda', area: 'musica', inicio: d(3), horaInicio: '16:00', horaFin: '18:00' },
-      { titulo: 'Jornada recreativa', area: 'oratorio', inicio: d(5), horaInicio: '09:00', horaFin: '12:00' },
-      { titulo: 'Auditoría interna de procesos', area: 'calidad', inicio: d(8), fin: d(9) },
-      { titulo: 'Encuentro de familias', area: 'proteccion', inicio: d(10), horaInicio: '10:00' },
-      { titulo: 'Inscripciones de nuevos estudiantes', area: 'etdh', inicio: d(7), fin: d(11), responsable: 'Secretaría académica' },
-      { titulo: 'Salida pedagógica', area: 'externado', inicio: d(11), horaInicio: '07:30', horaFin: '13:00' },
-      { titulo: 'Tarde de integración', area: 'bienestar', inicio: d(-3), horaInicio: '14:00', horaFin: '17:00' },
+      { titulo: 'Reunión de líderes de proceso', area: 'administracion', inicio: d(0), horaInicio: '08:00' },
+      { titulo: 'Eucaristía de inicio de semana', area: 'pastoral', inicio: d(0), horaInicio: '07:00' },
+      { titulo: 'Visita del delegado inspectorial de pastoral', area: 'inspectorial', inicio: d(1), fin: d(4) },
+      { titulo: 'Pausa activa', area: 'sst', inicio: d(1), horaInicio: '10:00' },
+      { titulo: 'Capacitación en primeros auxilios', area: 'sst', inicio: d(2), horaInicio: '14:00' },
+      { titulo: 'Comité de convivencia', area: 'gestion-humana', inicio: d(2), horaInicio: '15:00' },
+      { titulo: 'Ensayo de la banda', area: 'musica', inicio: d(3), horaInicio: '16:00' },
+      { titulo: 'Pausa activa', area: 'sst', inicio: d(3), horaInicio: '10:00' },
+      { titulo: 'Jornada recreativa', area: 'oratorio', inicio: d(5), horaInicio: '09:00' },
+      { titulo: 'Tarde de integración', area: 'bienestar', inicio: d(-3), horaInicio: '14:00' },
       { titulo: 'Entrega de informes de gestión', area: 'administracion', inicio: d(-5) },
-      { titulo: 'Simulacro de evacuación', area: 'sst', inicio: d(16), horaInicio: '10:00', horaFin: '10:30' }
+      { titulo: 'Inscripciones de nuevos estudiantes', area: 'etdh', inicio: d(7), fin: d(11) },
+      { titulo: 'Auditoría interna de procesos', area: 'calidad', inicio: d(8), fin: d(9) },
+      // Un día con muchas actividades, para ver cómo crece la celda del mes.
+      { titulo: 'Rosario comunitario', area: 'pastoral', inicio: d(9), horaInicio: '12:00' },
+      { titulo: 'Encuentro de familias', area: 'proteccion', inicio: d(9), horaInicio: '10:00' },
+      { titulo: 'Pausa activa', area: 'sst', inicio: d(9), horaInicio: '10:00' },
+      { titulo: 'Clase abierta de guitarra', area: 'musica', inicio: d(9), horaInicio: '15:00' },
+      { titulo: 'Salida pedagógica', area: 'externado', inicio: d(11), horaInicio: '07:30' },
+      { titulo: 'Simulacro de evacuación', area: 'sst', inicio: d(16), horaInicio: '10:00' },
+      { titulo: 'Convivencia de fin de año', area: 'bienestar', inicio: d(18) }
     ];
-
-    // Una serie mensual: rosario el día 24, omitiendo fines de semana.
-    var desde = L.aTexto(f.a, f.m, 1);
-    var hasta = L.sumarDias(L.aTexto(L.sumarMeses(f.a, f.m, 3).a, L.sumarMeses(f.a, f.m, 3).m, 1), -1);
-    var rosario = L.generarRepeticion(desde, { tipo: 'mensual', dia: 24, finDeSemana: 'omitir', hasta: hasta });
-    lista = lista.concat(L.expandirSerie(
-      { titulo: 'Rosario comunitario', area: 'pastoral', inicio: desde, horaInicio: '12:00', horaFin: '12:30' },
-      rosario.fechas, 'ejemplo-rosario'));
-
-    // Una serie semanal: pausa activa martes y jueves durante 6 semanas.
-    var pausa = L.generarRepeticion(d(-7), { tipo: 'semanal', dias: [1, 3], cada: 1, hasta: d(34) });
-    lista = lista.concat(L.expandirSerie(
-      { titulo: 'Pausa activa', area: 'sst', inicio: d(-7), horaInicio: '10:00', horaFin: '10:15' },
-      pausa.fechas, 'ejemplo-pausa'));
-
     return lista.map(function (a) {
       var x = limpiar(a);
       x.id = L.nuevoId();
@@ -194,10 +181,6 @@
 
       consultar: function (desde, hasta) {
         return Promise.resolve(leerTodo().filter(function (a) { return L.tocaRango(a, desde, hasta); }));
-      },
-
-      actividadesDeSerie: function (serie) {
-        return Promise.resolve(leerTodo().filter(function (a) { return a.serie === serie; }));
       },
 
       /* Solo demostración: volver a los datos de ejemplo. */
@@ -328,14 +311,6 @@
             snap.forEach(function (doc) { var a = doc.data(); a.id = doc.id; if ((a.fin || a.inicio) >= desde) r.push(a); });
             return r;
           }));
-      },
-
-      actividadesDeSerie: function (serie) {
-        return envolver(db.collection(COLECCION).where('serie', '==', serie).get().then(function (snap) {
-          var r = [];
-          snap.forEach(function (doc) { var a = doc.data(); a.id = doc.id; r.push(a); });
-          return r;
-        }));
       }
     };
   }

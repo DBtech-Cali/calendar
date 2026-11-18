@@ -50,7 +50,7 @@ Se hace una sola vez. Toma unos 20 minutos.
 5. En las reglas, cambia `CORREO_DE_EDICION@ejemplo.org` por el **mismo correo** del paso 2.2.
 6. Pulsa **Publicar**.
 
-Las reglas permiten que cualquiera **lea** las actividades, pero solo la cuenta de edición puede **escribirlas**. Además revisan que cada actividad tenga los campos correctos: nombre de máximo 140 caracteres, fechas válidas, fecha final igual o posterior a la inicial y un área existente.
+Las reglas permiten que cualquiera **lea** las actividades, pero solo la cuenta de edición puede **escribirlas**. Además revisan que cada actividad tenga solo los campos permitidos: nombre de máximo 140 caracteres, fechas válidas, fecha final igual o posterior a la inicial, hora válida o vacía y un área existente.
 
 ### 2.4 Pegar la configuración
 
@@ -149,19 +149,20 @@ Las rutas están en `logo` dentro de `js/config.js`. Usa solo archivos oficiales
 
 ### Actividades
 
+Cada actividad tiene:
+
 | Campo | Obligatorio | Notas |
 | --- | --- | --- |
 | Área | Sí | Una de las 12 áreas. |
-| Nombre | Sí | Máximo 140 caracteres. |
-| Fecha de inicio | Sí | |
-| Fecha final | No | Por defecto, la misma de inicio. Máximo 60 días de duración (se cambia en `maxDiasDuracion`). |
-| Hora de inicio y final | No | La hora final necesita hora de inicio y debe ser posterior. |
-| Responsable | No | Máximo 80 caracteres. |
+| Fecha | Sí | Fecha de inicio. |
+| Actividad | Sí | Máximo 140 caracteres. |
+| Varios días | No | Al marcarla, se pide la fecha final. Máximo 60 días de duración (se cambia en `maxDiasDuracion`). |
+| Hora | No | Solo hora de inicio. Si no se indica, no se muestra ninguna hora. |
 
-- Una actividad de varios días aparece en cada día que abarca. Si no tiene hora, aparece como «Todo el día».
-- **Repetición** (solo al crear): cada semana (días elegidos, cada 1 a 4 semanas) o cada mes (día fijo; si cae en fin de semana se puede omitir, pasar al lunes siguiente o al viernes anterior). Máximo un año hacia adelante. Antes de guardar se muestra cuántas actividades se crearán.
-- Editar una actividad repetida cambia solo esa fecha. Al eliminar se puede elegir: solo esta, esta y las siguientes, o toda la serie.
-- **Cruces de horario:** si la actividad coincide en fecha y hora con otra, aparece un aviso. **Nunca impide guardar**: el botón cambia a «Guardar de todos modos».
+- **Agregar varias de una vez:** se elige el área una sola vez y se escribe una actividad por fila (fecha, nombre, "Varios días", hora). Al pulsar **Enter** en una fila se pasa a la siguiente. Las filas vacías se ignoran.
+- Una actividad de varios días aparece en cada día que abarca.
+- En el calendario cada actividad muestra primero el **área** (color y nombre) y enseguida el **nombre**; debajo, la hora si la tiene. Las celdas del mes crecen para mostrar **todas** las actividades del día.
+- **Cruces de horario:** si una actividad con hora coincide con otra (de cualquier área o de otra fila del mismo formulario), aparece un aviso en esa fila. Para revisar cruces se asume que cada actividad dura 1 hora. El aviso **nunca impide guardar**: el botón cambia a «Guardar de todos modos».
 
 ### Estructura de archivos
 
@@ -174,7 +175,7 @@ css/app.css           estilos del calendario
 css/print.css         estilos de impresión
 css/widget.css        estilos de la pantalla de la semana
 js/config.js          configuración: Firebase, correo, áreas, logo
-js/logic.js           lógica pura: fechas, repeticiones, cruces, validación
+js/logic.js           lógica pura: fechas, cruces, validación, formatos
 js/db.js              datos: modo demostración y Firebase
 js/app.js             interfaz del calendario
 js/widget.js          interfaz de la pantalla de la semana
@@ -188,7 +189,7 @@ docs/identidad/       manual de identidad gráfica
 
 ### Datos en Firestore
 
-Colección `actividades`. Cada documento tiene: `titulo`, `area`, `inicio` y `fin` (texto `AAAA-MM-DD`), `horaInicio` y `horaFin` (texto `HH:MM` o vacío), `responsable`, `serie` (vacío o identificador de la repetición) y `actualizado` (hora del servidor).
+Colección `actividades`. Cada documento tiene: `titulo`, `area`, `inicio` y `fin` (texto `AAAA-MM-DD`; si dura un día, `fin` = `inicio`), `horaInicio` (texto `HH:MM` o vacío) y `actualizado` (hora del servidor).
 
 Las fechas se guardan como texto para evitar corrimientos por zona horaria. Cada pantalla consulta solo el periodo visible: desde 60 días antes, para incluir actividades largas que empezaron antes. Así el consumo queda dentro del plan gratuito.
 
@@ -206,7 +207,7 @@ En la vista de mes, usa **Imprimir** del navegador (Ctrl + P). Se ocultan los bo
   node --test
   ```
 
-  Cubren fechas, la matriz del mes, repeticiones (incluido el rosario del día 24), cruces y validaciones.
+  Cubren fechas, la matriz del mes, cruces, validaciones y el formulario por filas.
 - No hay dependencias ni paso de compilación. El SDK de Firebase (versión fijada en `versionFirebase` de `js/config.js`) se carga desde `gstatic.com` solo si hay configuración.
 - Todos los textos están en español de Colombia.
 

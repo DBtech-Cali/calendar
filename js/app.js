@@ -11,7 +11,6 @@
   var AREAS = {};
   C.areas.forEach(function (a) { AREAS[a.id] = a; });
   var IDS_AREAS = C.areas.map(function (a) { return a.id; });
-  var MAX_POR_CELDA = 3;
   var MAX_CRUCES = 5;
 
   /* ---------- Estado ---------- */
@@ -22,8 +21,8 @@
     actividades: [],
     ocultas: leerOcultas(),      // ids de áreas ocultas por el filtro
     cancelar: null,              // cancelar suscripción actual
-    editando: null,              // actividad que se edita (o null si es nueva)
-    cruces: [],
+    editando: null,              // actividad que se edita (o null si son nuevas)
+    cruces: 0,                   // cuántas filas del formulario tienen cruces
     confirmarCruce: false,
     firmaCruces: '',
     detalle: null,
@@ -70,11 +69,6 @@
 
   function punto(idArea) {
     return el('span', { clase: 'punto', 'aria-hidden': 'true', estilo: '--color-area:' + area(idArea).color });
-  }
-
-  function etiquetaArea(idArea, corto) {
-    return el('span', { clase: 'etiqueta-area', estilo: '--color-area:' + area(idArea).color },
-      [punto(idArea), corto ? nombreCorto(idArea) : area(idArea).nombre]);
   }
 
   function visibles() {
@@ -218,7 +212,6 @@
     var clases = ['celda'];
     if (fd.m !== mesVisible) clases.push('celda--fuera');
     if (dia === estado.hoy) clases.push('celda--hoy');
-    if (L.esFinDeSemana(dia)) clases.push('celda--fds');
 
     var etiquetaDia = L.mayuscula(L.formatoFechaLarga(dia)) + (dia === estado.hoy ? ' (hoy)' : '') +
       ', ' + (delDia.length === 0 ? 'sin actividades' : delDia.length === 1 ? '1 actividad' : delDia.length + ' actividades');
@@ -229,42 +222,44 @@
       onclick: function () { abrirDia(dia); }
     }, [el('span', { texto: String(fd.d) })]));
 
-    // Escritorio: hasta 3 actividades y "+N más".
-    var ul = el('ul', { clase: 'celda__lista' });
-    // Las que no caben quedan ocultas en pantalla, pero se imprimen.
-    delDia.forEach(function (a, i) {
-      ul.appendChild(el('li', { clase: i < MAX_POR_CELDA ? null : 'solo-impresion' }, [fichaMes(a)]));
-    });
-    celda.appendChild(ul);
-    if (delDia.length > MAX_POR_CELDA) {
-      var resto = delDia.length - MAX_POR_CELDA;
-      celda.appendChild(el('button', {
-        type: 'button', clase: 'celda__mas',
-        'aria-label': 'Ver ' + resto + ' actividades más del ' + L.formatoFechaLarga(dia),
-        onclick: function () { abrirDia(dia); }
-      }, ['+' + resto + ' más']));
+    // Escritorio: todas las actividades del día (la celda crece lo necesario).
+    if (delDia.length) {
+      var ul = el('ul', { clase: 'celda__lista' });
+      delDia.forEach(function (a) { ul.appendChild(el('li', null, [ficha(a, 'ficha')])); });
+      celda.appendChild(ul);
     }
 
-    // Celular: puntos de color por área.
+    // Celular: un punto de color por actividad.
     if (delDia.length) {
       var puntos = el('div', { clase: 'celda__puntos', 'aria-hidden': 'true' });
-      delDia.slice(0, 4).forEach(function (a) { puntos.appendChild(punto(a.area)); });
-      if (delDia.length > 4) puntos.appendChild(el('span', { clase: 'celda__puntos-mas', texto: '+' + (delDia.length - 4) }));
+      delDia.forEach(function (a) { puntos.appendChild(punto(a.area)); });
       celda.appendChild(puntos);
     }
     return celda;
   }
 
-  function fichaMes(a) {
+  /**
+   * Ficha de una actividad: primero el área (color + nombre) y enseguida el
+   * nombre de la actividad; debajo, solo si existen, la hora y el rango de días.
+   * clase: 'ficha' (celda del mes) o 'tarjeta' (semana y lista del día).
+   */
+  function ficha(a, clase) {
     var varios = a.fin && a.fin !== a.inicio;
-    var hora = a.horaInicio ? L.formatoHora(a.horaInicio) : (varios ? 'Todo el día' : '');
+    var meta = [];
+    if (a.horaInicio) meta.push(L.formatoHora(a.horaInicio));
+    if (varios && clase === 'tarjeta') meta.push(L.formatoRango(a.inicio, a.fin));
+    var etiqueta = area(a.area).nombre + ': ' + a.titulo + (meta.length ? '. ' + meta.join('. ') : '');
     return el('button', {
-      type: 'button', clase: 'ficha', estilo: '--color-area:' + area(a.area).color,
-      'aria-label': a.titulo + '. ' + area(a.area).nombre + '. ' + L.formatoHorario(a),
+      type: 'button', clase: clase, estilo: '--color-area:' + area(a.area).color,
+      'aria-label': etiqueta,
       onclick: function () { abrirDetalle(a); }
     }, [
-      el('span', { clase: 'ficha__area' }, [punto(a.area), nombreCorto(a.area)]),
-      el('span', { clase: 'ficha__titulo' }, [hora ? el('span', { clase: 'ficha__hora', texto: hora + ' · ' }) : null, a.titulo])
+      el('span', { clase: clase + '__linea' }, [
+        el('span', { clase: clase + '__area' }, [punto(a.area), nombreCorto(a.area)]),
+        ' ',
+        el('span', { clase: clase + '__titulo', texto: a.titulo })
+      ]),
+      meta.length ? el('span', { clase: clase + '__meta', texto: meta.join(' · ') }) : null
     ]);
   }
 
@@ -280,43 +275,30 @@
       var fd = L.leerFecha(dia);
       var esHoy = dia === estado.hoy;
       var col = el('section', {
-        clase: 'columna' + (esHoy ? ' columna--hoy' : '') + (dia < estado.hoy ? ' columna--pasado' : ''),
+        clase: 'columna' + (esHoy ? ' columna--hoy' : ''),
         'aria-label': L.mayuscula(L.formatoFechaLarga(dia)) + (esHoy ? ' (hoy)' : '')
       });
       col.appendChild(el('header', { clase: 'columna__cabeza' }, [
         el('h3', { clase: 'columna__dia' }, [
           el('span', { clase: 'columna__nombre', texto: L.mayuscula(L.DIAS[i]) }),
-          el('span', { clase: 'columna__numero', texto: fd.d + ' ' + L.nombreMes(fd.m).slice(0, 3) })
+          el('span', { clase: 'columna__numero' }, [
+            fd.d + ' ' + L.nombreMes(fd.m).slice(0, 3),
+            esHoy ? el('span', { clase: 'pildora-hoy', texto: 'Hoy' }) : null
+          ])
         ]),
-        esHoy ? el('span', { clase: 'pildora-hoy', texto: 'Hoy' }) : null,
         el('button', {
           type: 'button', clase: 'boton boton--icono boton--agregar-dia',
-          'aria-label': 'Agregar actividad el ' + L.formatoFechaLarga(dia),
+          'aria-label': 'Agregar actividades el ' + L.formatoFechaLarga(dia),
           onclick: function () { pedirSesion(function () { abrirFormulario(null, dia); }); }
         }, [el('span', { 'aria-hidden': 'true', texto: '+' })])
       ]));
       var ul = el('ul', { clase: 'lista-actividades' });
       if (!delDia.length) ul.appendChild(el('li', { clase: 'vacio', texto: 'Sin actividades' }));
-      delDia.forEach(function (a) { ul.appendChild(el('li', null, [tarjeta(a)])); });
+      delDia.forEach(function (a) { ul.appendChild(el('li', null, [ficha(a, 'tarjeta')])); });
       col.appendChild(ul);
       grilla.appendChild(col);
     });
     cont.appendChild(grilla);
-  }
-
-  /** Tarjeta de actividad: hora, nombre, área y responsable. */
-  function tarjeta(a) {
-    var varios = a.fin && a.fin !== a.inicio;
-    return el('button', {
-      type: 'button', clase: 'tarjeta', estilo: '--color-area:' + area(a.area).color,
-      onclick: function () { abrirDetalle(a); }
-    }, [
-      el('span', { clase: 'tarjeta__hora', texto: L.formatoHorario(a) }),
-      el('span', { clase: 'tarjeta__titulo', texto: a.titulo }),
-      etiquetaArea(a.area),
-      a.responsable ? el('span', { clase: 'tarjeta__responsable', texto: a.responsable }) : null,
-      varios ? el('span', { clase: 'tarjeta__rango', texto: L.formatoRango(a.inicio, a.fin) }) : null
-    ]);
   }
 
   /* ---------- Filtros ---------- */
@@ -361,12 +343,11 @@
     ul.textContent = '';
     var delDia = L.actividadesDelDia(visibles(), dia);
     if (!delDia.length) ul.appendChild(el('li', { clase: 'vacio', texto: 'No hay actividades este día.' }));
-    delDia.forEach(function (a) { ul.appendChild(el('li', null, [tarjeta(a)])); });
+    delDia.forEach(function (a) { ul.appendChild(el('li', null, [ficha(a, 'tarjeta')])); });
   }
 
   /* ---------- Detalle ---------- */
   function abrirDetalle(a) {
-    estado.detalle = a;
     llenarDetalle(a);
     abrir($('dlg-detalle'));
   }
@@ -380,9 +361,10 @@
     etq.appendChild(document.createTextNode(area(a.area).nombre));
     $('det-titulo').textContent = a.titulo;
     $('det-fecha').textContent = L.formatoRango(a.inicio, a.fin);
+    // La hora solo se muestra si existe.
     $('det-horario').textContent = L.formatoHorario(a);
-    $('det-responsable').textContent = a.responsable || 'Sin responsable indicado';
-    $('det-serie').hidden = !a.serie;
+    $('det-horario').hidden = !a.horaInicio;
+    $('det-horario-t').hidden = !a.horaInicio;
   }
 
   /* ---------- Sesión ---------- */
@@ -410,9 +392,10 @@
     var b = $('btn-ingresar');
     b.disabled = true;
     datos.ingresar(clave).then(function () {
+      var p = estado.pendiente;
+      estado.pendiente = null;
       cerrar($('dlg-clave'));
       notificar('Ingresaste. Ya puedes agregar y editar actividades.');
-      var p = estado.pendiente; estado.pendiente = null;
       if (p) p();
     }).catch(function (err) {
       $('e-clave').textContent = err.message;
@@ -420,227 +403,289 @@
     }).then(function () { b.disabled = false; });
   }
 
-  /* ---------- Formulario ---------- */
-  var CAMPOS = ['area', 'titulo', 'inicio', 'fin', 'horaInicio', 'horaFin', 'responsable'];
-  var ENTRADAS = { area: 'f-area', titulo: 'f-titulo', inicio: 'f-inicio', fin: 'f-fin', horaInicio: 'f-hora-inicio', horaFin: 'f-hora-fin', responsable: 'f-responsable' };
+  /* ---------- Formulario por filas ---------- */
+  var CAMPOS_FILA = ['inicio', 'titulo', 'varios', 'fin', 'horaInicio'];
+  var NOMBRES_CAMPO = { inicio: 'Fecha', titulo: 'Actividad', fin: 'Fecha final', horaInicio: 'Hora' };
+  var contadorFilas = 0;
 
-  function abrirFormulario(act, dia) {
-    estado.editando = act || null;
-    estado.confirmarCruce = false;
-    estado.firmaCruces = '';
-    var nueva = !act;
-    $('form-titulo').textContent = nueva ? 'Agregar actividad' : 'Editar actividad';
-    var base = act || { area: '', titulo: '', inicio: dia || estado.hoy, fin: dia || estado.hoy, horaInicio: '', horaFin: '', responsable: '' };
-    CAMPOS.forEach(function (c) { $(ENTRADAS[c]).value = base[c] || ''; });
-    if (!base.fin) $('f-fin').value = base.inicio;
-    limpiarErrores();
-    actualizarContador();
+  function filas() { return Array.prototype.slice.call($('filas').children); }
+  function campo(fila, nombre) { return fila.querySelector('[data-campo="' + nombre + '"]'); }
 
-    $('repetir').hidden = !nueva;
-    $('f-repetir').value = 'no';
-    $('rep-cada').value = '1';
-    $('rep-hasta').value = '';
-    document.querySelector('input[name="rep-fds"][value="omitir"]').checked = true;
-    prepararRepeticion();
-    $('btn-guardar').textContent = 'Guardar';
-    $('aviso-cruce').hidden = true;
-    $('aviso-cruce').textContent = '';
-    $('nota-serie').hidden = !(act && act.serie);
-    cerrar($('dlg-detalle'));
-    cerrar($('dlg-dia'));
-    abrir($('dlg-actividad'));
-    $(nueva ? 'f-area' : 'f-titulo').focus();
-    revisarCruces();
-  }
-
-  function leerFormulario() {
-    var a = {};
-    CAMPOS.forEach(function (c) { a[c] = $(ENTRADAS[c]).value; });
-    return a;
-  }
-
-  function limpiarErrores() {
-    CAMPOS.forEach(function (c) {
-      $('e-' + c).textContent = '';
-      $(ENTRADAS[c]).removeAttribute('aria-invalid');
-    });
-    $('e-general').textContent = '';
-  }
-
-  function mostrarErrores(errores) {
-    limpiarErrores();
-    var primero = null;
-    CAMPOS.forEach(function (c) {
-      if (errores[c]) {
-        $('e-' + c).textContent = errores[c];
-        $(ENTRADAS[c]).setAttribute('aria-invalid', 'true');
-        if (!primero) primero = ENTRADAS[c];
-      }
-    });
-    if (primero) $(primero).focus();
-  }
-
-  function actualizarContador() {
-    $('c-titulo').textContent = $('f-titulo').value.length + ' de ' + L.MAX_TITULO + ' caracteres';
-  }
-
-  /* Repetición */
-  function prepararRepeticion() {
-    var tipo = $('f-repetir').value;
-    $('rep-semanal').hidden = tipo !== 'semanal';
-    $('rep-mensual').hidden = tipo !== 'mensual';
-    $('rep-hasta-campo').hidden = tipo === 'no';
-    var inicio = $('f-inicio').value;
-    if (tipo !== 'no' && L.esFechaValida(inicio)) {
-      if (!$('rep-hasta').value) {
-        var f = L.leerFecha(inicio);
-        var m = L.sumarMeses(f.a, f.m, tipo === 'mensual' ? 6 : 3);
-        $('rep-hasta').value = L.sumarDias(L.aTexto(m.a, m.m, 1), -1);
-      }
-      $('rep-hasta').min = inicio;
-      $('rep-hasta').max = L.sumarAnios(inicio, 1);
-      if (tipo === 'semanal' && !document.querySelector('#rep-dias input:checked')) {
-        var cb = document.querySelector('#rep-dias input[value="' + L.diaSemana(inicio) + '"]');
-        if (cb) cb.checked = true;
-      }
-      if (tipo === 'mensual' && !$('rep-dia').value) $('rep-dia').value = String(L.leerFecha(inicio).d);
-    }
-    if (tipo === 'no') {
-      document.querySelectorAll('#rep-dias input').forEach(function (c) { c.checked = false; });
-      $('rep-dia').value = '';
-    }
-    actualizarVistaPrevia();
-  }
-
-  function reglaRepeticion() {
-    var tipo = $('f-repetir').value;
-    if (tipo === 'no' || estado.editando) return null;
-    if (tipo === 'semanal') {
-      return {
-        tipo: 'semanal',
-        dias: Array.prototype.map.call(document.querySelectorAll('#rep-dias input:checked'), function (c) { return +c.value; }),
-        cada: +$('rep-cada').value,
-        hasta: $('rep-hasta').value
-      };
-    }
+  function leerFila(fila) {
     return {
-      tipo: 'mensual',
-      dia: +$('rep-dia').value,
-      finDeSemana: document.querySelector('input[name="rep-fds"]:checked').value,
-      hasta: $('rep-hasta').value
+      inicio: campo(fila, 'inicio').value,
+      titulo: campo(fila, 'titulo').value,
+      varios: campo(fila, 'varios').checked,
+      fin: campo(fila, 'fin').value,
+      horaInicio: campo(fila, 'horaInicio').value
     };
   }
 
-  /** Devuelve { fechas, error } de la repetición actual (o una sola fecha). */
-  function fechasDelFormulario() {
-    var inicio = $('f-inicio').value;
-    var regla = reglaRepeticion();
-    if (!regla) return { fechas: L.esFechaValida(inicio) ? [inicio] : [], error: '' };
-    return L.generarRepeticion(inicio, regla);
+  /** Agrega una fila al formulario y la devuelve. */
+  function agregarFila(valores) {
+    var v = valores || {};
+    var fila = $('plantilla-fila').content.firstElementChild.cloneNode(true);
+    var n = ++contadorFilas;
+    CAMPOS_FILA.forEach(function (c) {
+      var input = campo(fila, c);
+      input.id = 'fila' + n + '-' + c;
+      if (c === 'varios') input.checked = !!v.varios;
+      else input.value = v[c] || '';
+    });
+    fila.querySelectorAll('label[data-para]').forEach(function (lab) {
+      lab.setAttribute('for', 'fila' + n + '-' + lab.dataset.para);
+    });
+    var err = fila.querySelector('[data-error]');
+    err.id = 'fila' + n + '-error';
+    ['inicio', 'titulo', 'fin', 'horaInicio'].forEach(function (c) { campo(fila, c).setAttribute('aria-describedby', err.id); });
+    mostrarFin(fila, !!v.varios);
+    $('filas').appendChild(fila);
+    numerarFilas();
+    return fila;
   }
 
-  function actualizarVistaPrevia() {
-    var vp = $('rep-vista-previa');
-    if (!reglaRepeticion()) { vp.textContent = ''; vp.classList.remove('vista-previa--error'); return; }
-    var r = fechasDelFormulario();
-    vp.textContent = r.error || L.textoVistaPrevia(r.fechas);
-    vp.classList.toggle('vista-previa--error', !!r.error);
+  /** Etiquetas accesibles con el número de fila ("Actividad 2"). */
+  function numerarFilas() {
+    var todas = filas();
+    todas.forEach(function (fila, i) {
+      var n = i + 1;
+      fila.querySelectorAll('label[data-para]').forEach(function (lab) {
+        var base = NOMBRES_CAMPO[lab.dataset.para];
+        lab.textContent = '';
+        lab.appendChild(document.createTextNode(lab.dataset.para === 'fin' ? 'Hasta' : base));
+        lab.appendChild(el('span', { clase: 'oculto', texto: ' (actividad ' + n + ')' }));
+      });
+      campo(fila, 'varios').setAttribute('aria-label', 'Varios días (actividad ' + n + ')');
+      var q = fila.querySelector('[data-quitar]');
+      q.setAttribute('aria-label', 'Quitar la actividad ' + n);
+      q.hidden = !!estado.editando;
+    });
   }
 
-  /* Cruces: solo advertencia */
+  function mostrarFin(fila, visible) {
+    var cont = fila.querySelector('.fila__fin');
+    cont.hidden = !visible;
+    fila.classList.toggle('fila--varios', visible);
+    var inicio = campo(fila, 'inicio').value;
+    var fin = campo(fila, 'fin');
+    if (L.esFechaValida(inicio)) fin.min = inicio; else fin.removeAttribute('min');
+  }
+
+  function abrirFormulario(act, dia) {
+    estado.editando = act || null;
+    estado.cruces = 0;
+    estado.confirmarCruce = false;
+    estado.firmaCruces = '';
+    var nueva = !act;
+    $('form-titulo').textContent = nueva ? 'Agregar actividades' : 'Editar actividad';
+    $('f-area').value = act ? act.area : preferencia('ultima-area', '');
+    if (!AREAS[$('f-area').value]) $('f-area').value = '';
+    $('f-area').removeAttribute('aria-invalid');
+    $('e-area').textContent = '';
+    $('e-general').textContent = '';
+    $('filas').textContent = '';
+    contadorFilas = 0;
+    if (act) {
+      agregarFila({ inicio: act.inicio, titulo: act.titulo, varios: act.fin && act.fin !== act.inicio, fin: act.fin !== act.inicio ? act.fin : '', horaInicio: act.horaInicio });
+    } else {
+      agregarFila({ inicio: dia || '' });
+    }
+    $('btn-agregar-fila').hidden = !nueva;
+    $('ayuda-filas').hidden = !nueva;
+    $('btn-guardar').textContent = 'Guardar';
+    $('aviso-cruce').hidden = true;
+    $('aviso-cruce').textContent = '';
+    cerrar($('dlg-detalle'));
+    cerrar($('dlg-dia'));
+    abrir($('dlg-actividad'));
+    if (!$('f-area').value) $('f-area').focus();
+    else if (!dia && nueva) campo(filas()[0], 'inicio').focus();
+    else campo(filas()[0], 'titulo').focus();
+    revisarCruces();
+  }
+
+  /** Pasa a la fila siguiente (y la crea si es la última). */
+  function siguienteFila(fila) {
+    var todas = filas();
+    var i = todas.indexOf(fila);
+    var sig = todas[i + 1];
+    if (!sig) {
+      if (estado.editando) { $('btn-guardar').focus(); return; }
+      sig = agregarFila({ inicio: campo(fila, 'inicio').value });
+    }
+    campo(sig, 'inicio').focus();
+  }
+
+  function quitarFila(fila) {
+    var todas = filas();
+    if (todas.length === 1) {
+      ['inicio', 'titulo', 'fin', 'horaInicio'].forEach(function (c) { campo(fila, c).value = ''; });
+      campo(fila, 'varios').checked = false;
+      mostrarFin(fila, false);
+      campo(fila, 'inicio').focus();
+    } else {
+      var i = todas.indexOf(fila);
+      fila.remove();
+      numerarFilas();
+      var foco = filas()[Math.max(0, i - 1)];
+      campo(foco, 'titulo').focus();
+    }
+    revisarCruces();
+  }
+
+  function limpiarErrores() {
+    $('e-area').textContent = '';
+    $('f-area').removeAttribute('aria-invalid');
+    $('e-general').textContent = '';
+    filas().forEach(function (fila) {
+      fila.querySelector('[data-error]').textContent = '';
+      fila.classList.remove('fila--error');
+      fila.querySelectorAll('[aria-invalid]').forEach(function (i) { i.removeAttribute('aria-invalid'); });
+    });
+  }
+
+  function mostrarErrores(r) {
+    limpiarErrores();
+    var primero = null;
+    if (r.general) {
+      if (!$('f-area').value) {
+        $('e-area').textContent = r.general;
+        $('f-area').setAttribute('aria-invalid', 'true');
+        primero = $('f-area');
+      } else {
+        $('e-general').textContent = r.general;
+        primero = campo(filas()[0], 'titulo');
+      }
+    }
+    var todas = filas();
+    Object.keys(r.errores).forEach(function (i) {
+      var fila = todas[i];
+      var e = r.errores[i];
+      fila.classList.add('fila--error');
+      fila.querySelector('[data-error]').textContent = Object.keys(e).map(function (c) { return e[c]; }).join(' ');
+      Object.keys(e).forEach(function (c) {
+        var input = campo(fila, c);
+        if (input) {
+          input.setAttribute('aria-invalid', 'true');
+          if (!primero) primero = input;
+        }
+      });
+    });
+    if (primero) primero.focus();
+  }
+
+  /* Cruces: solo advertencia, nunca impide guardar. */
   var tCruces, turnoCruces = 0;
   function revisarCruces() {
     clearTimeout(tCruces);
     tCruces = setTimeout(calcularCruces, 250);
   }
 
+  /** Candidatas a revisar: filas con fecha válida y hora. */
+  function candidatas() {
+    var r = [];
+    filas().forEach(function (fila, i) {
+      var f = leerFila(fila);
+      var inicio = f.inicio;
+      var fin = f.varios && f.fin ? f.fin : inicio;
+      if (!L.esFechaValida(inicio) || !L.esHoraValida(f.horaInicio) || !L.esFechaValida(fin) || fin < inicio) return;
+      r.push({
+        fila: fila, n: i + 1,
+        act: {
+          id: estado.editando ? estado.editando.id : 'fila-' + i,
+          titulo: f.titulo.trim() || 'Actividad ' + (i + 1), area: $('f-area').value,
+          inicio: inicio, fin: fin, horaInicio: f.horaInicio
+        }
+      });
+    });
+    return r;
+  }
+
   function calcularCruces() {
-    var a = L.normalizar(leerFormulario());
-    var r = fechasDelFormulario();
-    if (!a.horaInicio || !L.esHoraValida(a.horaInicio) || !r.fechas.length || !L.esFechaValida(a.fin) || a.fin < a.inicio) {
-      ponerCruces([]);
-      return;
-    }
-    var duracion = L.diferenciaDias(a.inicio, a.fin);
-    var desde = r.fechas[0];
-    var hasta = L.sumarDias(r.fechas[r.fechas.length - 1], duracion);
+    var cands = candidatas();
+    if (!cands.length) { ponerCruces([]); return; }
+    var desde = cands.reduce(function (m, c) { return c.act.inicio < m ? c.act.inicio : m; }, cands[0].act.inicio);
+    var hasta = cands.reduce(function (m, c) { return c.act.fin > m ? c.act.fin : m; }, cands[0].act.fin);
     var turno = ++turnoCruces;
     datos.consultar(desde, hasta).then(function (lista) {
       if (turno !== turnoCruces) return;
-      var vistos = {}, cruces = [];
-      r.fechas.forEach(function (f) {
-        var candidata = Object.assign({}, a, { inicio: f, fin: L.sumarDias(f, duracion), id: estado.editando ? estado.editando.id : '' });
-        L.buscarCruces(candidata, lista).forEach(function (c) {
-          if (!vistos[c.id]) { vistos[c.id] = true; cruces.push(c); }
-        });
-      });
-      cruces.sort(function (x, y) { return x.inicio < y.inicio ? -1 : x.inicio > y.inicio ? 1 : L.comparar(x, y); });
-      ponerCruces(cruces);
+      var otrasFilas = cands.map(function (c) { return c.act; });
+      ponerCruces(cands.map(function (c) {
+        var conDatos = L.buscarCruces(c.act, lista);
+        var conFilas = L.buscarCruces(c.act, otrasFilas);
+        return { cand: c, cruces: conDatos.concat(conFilas) };
+      }).filter(function (x) { return x.cruces.length; }));
     }).catch(function () { /* sin aviso si no se puede consultar */ });
   }
 
-  function ponerCruces(cruces) {
-    estado.cruces = cruces;
-    var firma = cruces.map(function (c) { return c.id; }).join(',');
+  function textoCruce(c) {
+    if (String(c.id).indexOf('fila-') === 0) return '«' + c.titulo + '» (otra fila de este formulario, ' + L.formatoHora(c.horaInicio) + ')';
+    return '«' + c.titulo + '» (' + area(c.area).nombre + ', ' + L.formatoHora(c.horaInicio) + ')';
+  }
+
+  function ponerCruces(conCruce) {
+    filas().forEach(function (fila) {
+      var p = fila.querySelector('[data-cruce]');
+      p.hidden = true; p.textContent = '';
+      fila.classList.remove('fila--cruce');
+    });
+    conCruce.forEach(function (x) {
+      var p = x.cand.fila.querySelector('[data-cruce]');
+      var lista = x.cruces.slice(0, MAX_CRUCES).map(textoCruce).join('; ');
+      if (x.cruces.length > MAX_CRUCES) lista += '… y ' + (x.cruces.length - MAX_CRUCES) + ' más';
+      p.textContent = 'Se cruza en horario con ' + lista + '.';
+      p.hidden = false;
+      x.cand.fila.classList.add('fila--cruce');
+    });
+
+    var firma = conCruce.map(function (x) { return x.cand.n + ':' + x.cruces.map(function (c) { return c.id; }).join(','); }).join('|');
     if (firma !== estado.firmaCruces) {
       estado.firmaCruces = firma;
       estado.confirmarCruce = false;
       $('btn-guardar').textContent = 'Guardar';
     }
+    estado.cruces = conCruce.length;
+
     var aviso = $('aviso-cruce');
     aviso.textContent = '';
-    if (!cruces.length) { aviso.hidden = true; return; }
-    aviso.hidden = false;
-    aviso.appendChild(el('p', { clase: 'aviso-cruce__titulo' }, [
+    aviso.hidden = !conCruce.length;
+    if (!conCruce.length) return;
+    aviso.appendChild(el('p', null, [
       el('strong', { texto: 'Atención: ' }),
-      cruces.length === 1 ? 'esta actividad se cruza en horario con otra.' : 'esta actividad se cruza en horario con otras ' + cruces.length + '.'
+      conCruce.length === 1
+        ? 'una actividad se cruza en horario con otra (se asume 1 hora de duración).'
+        : conCruce.length + ' actividades se cruzan en horario con otras (se asume 1 hora de duración).'
     ]));
-    var ul = el('ul');
-    cruces.slice(0, MAX_CRUCES).forEach(function (c) {
-      ul.appendChild(el('li', null, [
-        el('span', { clase: 'aviso-cruce__cuando', texto: L.mayuscula(L.formatoFechaCorta(c.inicio)) + ', ' + L.formatoHorario(c) + ': ' }),
-        c.titulo + ' ',
-        etiquetaArea(c.area, true)
-      ]));
-    });
-    if (cruces.length > MAX_CRUCES) ul.appendChild(el('li', { texto: '… y ' + (cruces.length - MAX_CRUCES) + ' más' }));
-    aviso.appendChild(ul);
-    aviso.appendChild(el('p', { clase: 'aviso-cruce__nota', texto: 'Puedes guardar de todos modos; el cruce no impide guardar.' }));
+    aviso.appendChild(el('p', { clase: 'aviso-cruce__nota', texto: 'Revisa los detalles en cada fila. El cruce no impide guardar.' }));
   }
 
   function enviarFormulario(ev) {
     ev.preventDefault();
-    var a = L.normalizar(leerFormulario());
-    var v = L.validar(a, { areas: IDS_AREAS, maxDias: C.maxDiasDuracion });
-    if (!v.ok) { mostrarErrores(v.errores); return; }
+    var idArea = $('f-area').value;
+    var r = L.validarLote(idArea, filas().map(leerFila), { areas: IDS_AREAS, maxDias: C.maxDiasDuracion });
+    if (!r.ok) { mostrarErrores(r); return; }
     limpiarErrores();
-    var r = fechasDelFormulario();
-    if (r.error) { $('e-general').textContent = r.error; $('f-repetir').focus(); return; }
 
     // Primer clic con cruces: advertir y cambiar el botón.
-    clearTimeout(tCruces);
-    if (estado.cruces.length && !estado.confirmarCruce) {
+    if (estado.cruces && !estado.confirmarCruce) {
       estado.confirmarCruce = true;
       $('btn-guardar').textContent = 'Guardar de todos modos';
       $('aviso-cruce').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       return;
     }
 
+    var acts = r.actividades.map(function (x) { return x.actividad; });
     var b = $('btn-guardar');
     b.disabled = true;
-    var promesa;
-    if (estado.editando) {
-      a.serie = estado.editando.serie || '';
-      promesa = datos.actualizar(estado.editando.id, a);
-    } else if (r.fechas.length > 1) {
-      promesa = datos.crear(L.expandirSerie(a, r.fechas, L.nuevoId()));
-    } else {
-      promesa = datos.crear([a]);
-    }
+    var editando = estado.editando;
+    var promesa = editando ? datos.actualizar(editando.id, acts[0]) : datos.crear(acts);
     promesa.then(function () {
+      guardarPreferencia('ultima-area', idArea);
       cerrar($('dlg-actividad'));
-      notificar(estado.editando ? 'Cambios guardados.' : r.fechas.length > 1 ? 'Se crearon ' + r.fechas.length + ' actividades.' : 'Actividad guardada.');
-      if (!estado.editando) irA(a.inicio);
+      notificar(editando ? 'Cambios guardados.' : acts.length === 1 ? 'Actividad guardada.' : 'Se guardaron ' + acts.length + ' actividades.');
+      var primera = acts.map(function (a) { return a.inicio; }).sort()[0];
+      var rv = rangoVisible();
+      if (primera < rv.desde || primera > rv.hasta) irA(primera);
     }).catch(function (err) {
       $('e-general').textContent = 'No se pudo guardar. ' + err.message;
     }).then(function () { b.disabled = false; });
@@ -649,9 +694,8 @@
   /* ---------- Eliminar ---------- */
   function abrirEliminar(a) {
     estado.detalle = a;
-    $('eliminar-texto').textContent = '¿Seguro que quieres eliminar «' + a.titulo + '» (' + L.formatoRango(a.inicio, a.fin).toLowerCase() + ')? Esta acción no se puede deshacer.';
-    $('eliminar-opciones').hidden = !a.serie;
-    document.querySelector('input[name="eliminar-modo"][value="solo"]').checked = true;
+    $('eliminar-texto').textContent = '¿Seguro que quieres eliminar «' + a.titulo + '» (' +
+      L.formatoRango(a.inicio, a.fin).toLowerCase() + ')? Esta acción no se puede deshacer.';
     $('e-eliminar').textContent = '';
     cerrar($('dlg-detalle'));
     abrir($('dlg-eliminar'));
@@ -660,17 +704,11 @@
   function confirmarEliminar(ev) {
     ev.preventDefault();
     var a = estado.detalle;
-    var modo = a.serie ? document.querySelector('input[name="eliminar-modo"]:checked').value : 'solo';
     var b = $('btn-confirmar-eliminar');
     b.disabled = true;
-    var p = modo === 'solo' ? Promise.resolve([a]) : datos.actividadesDeSerie(a.serie);
-    p.then(function (lista) {
-      var ids = L.seleccionarSerie(lista, a, modo).map(function (x) { return x.id; });
-      if (!ids.length) ids = [a.id];
-      return datos.eliminar(ids).then(function () { return ids.length; });
-    }).then(function (n) {
+    datos.eliminar([a.id]).then(function () {
       cerrar($('dlg-eliminar'));
-      notificar(n === 1 ? 'Actividad eliminada.' : 'Se eliminaron ' + n + ' actividades.');
+      notificar('Actividad eliminada.');
     }).catch(function (err) {
       $('e-eliminar').textContent = 'No se pudo eliminar. ' + err.message;
     }).then(function () { b.disabled = false; });
@@ -693,24 +731,16 @@
     logo.src = C.logo.color;
     logo.alt = C.logo.alt;
 
-    // Selectores de área, días y "Ir a".
+    // Selectores de área y "Ir a".
     var selArea = $('f-area');
     selArea.appendChild(el('option', { value: '', texto: 'Elige un área' }));
     C.areas.forEach(function (a) { selArea.appendChild(el('option', { value: a.id, texto: a.nombre })); });
-
-    var dias = $('rep-dias');
-    L.DIAS.forEach(function (d, i) {
-      dias.appendChild(el('label', { clase: 'dia-check' }, [
-        el('input', { type: 'checkbox', value: String(i), onchange: function () { actualizarVistaPrevia(); revisarCruces(); } }),
-        el('span', { texto: L.mayuscula(L.DIAS_CORTOS[i]), title: L.mayuscula(d) })
-      ]));
-    });
 
     L.MESES.forEach(function (m, i) { $('ir-mes').appendChild(el('option', { value: String(i + 1), texto: L.mayuscula(m) })); });
     var anioActual = L.leerFecha(estado.hoy).a;
     for (var a = anioActual - 3; a <= anioActual + 3; a++) $('ir-anio').appendChild(el('option', { value: String(a), texto: String(a) }));
 
-    // Eventos de la barra.
+    // Barra de navegación.
     $('btn-anterior').addEventListener('click', function () { mover(-1); });
     $('btn-siguiente').addEventListener('click', function () { mover(1); });
     $('btn-hoy').addEventListener('click', function () { irA(estado.hoy); });
@@ -736,7 +766,8 @@
       b.addEventListener('click', function () { cerrar(b.closest('dialog')); });
     });
     document.querySelectorAll('dialog').forEach(function (d) {
-      // Cerrar al hacer clic en el fondo.
+      // Cerrar al hacer clic en el fondo (no en el formulario, para no perder lo escrito).
+      if (d.id === 'dlg-actividad') return;
       d.addEventListener('click', function (ev) { if (ev.target === d) cerrar(d); });
     });
     $('dlg-clave').addEventListener('close', function () { estado.pendiente = null; });
@@ -754,31 +785,44 @@
     });
     $('form-eliminar').addEventListener('submit', confirmarEliminar);
 
-    // Formulario.
+    // Formulario por filas.
     $('form-actividad').addEventListener('submit', enviarFormulario);
-    $('f-titulo').addEventListener('input', actualizarContador);
-    var inicioAnterior = '';
-    $('f-inicio').addEventListener('focus', function () { inicioAnterior = $('f-inicio').value; });
-    $('f-inicio').addEventListener('change', function () {
-      // Si la fecha final era igual a la inicial (o anterior), moverla junto con ella.
-      var fin = $('f-fin').value;
-      if (!fin || fin === inicioAnterior || fin < $('f-inicio').value) $('f-fin').value = $('f-inicio').value;
-      inicioAnterior = $('f-inicio').value;
-      $('rep-hasta').value = '';
-      $('rep-dia').value = '';
-      prepararRepeticion();
+    $('f-area').addEventListener('change', revisarCruces);
+    $('btn-agregar-fila').addEventListener('click', function () {
+      var ultima = filas()[filas().length - 1];
+      var nueva = agregarFila({ inicio: ultima ? campo(ultima, 'inicio').value : '' });
+      campo(nueva, 'inicio').focus();
     });
-    ['f-inicio', 'f-fin', 'f-hora-inicio', 'f-hora-fin'].forEach(function (id) {
-      $(id).addEventListener('input', revisarCruces);
-      $(id).addEventListener('change', revisarCruces);
+    var lista = $('filas');
+    lista.addEventListener('change', function (ev) {
+      var fila = ev.target.closest('.fila');
+      if (!fila) return;
+      var c = ev.target.dataset.campo;
+      if (c === 'varios') {
+        mostrarFin(fila, ev.target.checked);
+        if (ev.target.checked) {
+          var fin = campo(fila, 'fin');
+          if (!fin.value) fin.value = campo(fila, 'inicio').value;
+          fin.focus();
+        }
+      }
+      if (c === 'inicio') {
+        mostrarFin(fila, campo(fila, 'varios').checked);
+        var f = campo(fila, 'fin');
+        if (f.value && f.value < ev.target.value) f.value = ev.target.value;
+      }
+      revisarCruces();
     });
-    $('f-repetir').addEventListener('change', function () { prepararRepeticion(); revisarCruces(); });
-    ['rep-cada', 'rep-hasta', 'rep-dia'].forEach(function (id) {
-      $(id).addEventListener('input', function () { actualizarVistaPrevia(); revisarCruces(); });
-      $(id).addEventListener('change', function () { actualizarVistaPrevia(); revisarCruces(); });
+    lista.addEventListener('input', revisarCruces);
+    lista.addEventListener('click', function (ev) {
+      var q = ev.target.closest('[data-quitar]');
+      if (q) quitarFila(q.closest('.fila'));
     });
-    document.querySelectorAll('input[name="rep-fds"]').forEach(function (r) {
-      r.addEventListener('change', function () { actualizarVistaPrevia(); revisarCruces(); });
+    // Enter dentro de una fila pasa a la siguiente en lugar de guardar.
+    lista.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' || ev.target.tagName !== 'INPUT' || ev.target.type === 'checkbox') return;
+      ev.preventDefault();
+      siguienteFila(ev.target.closest('.fila'));
     });
 
     // Modo demostración.
@@ -798,13 +842,13 @@
       if (h !== estado.hoy) { estado.hoy = h; dibujar(); }
     }, 60000);
 
-    // Atajos de teclado: ← → para cambiar de periodo, "h" para hoy.
+    // Atajos: ← → para cambiar de periodo.
     document.addEventListener('keydown', function (ev) {
       if (document.querySelector('dialog[open]')) return;
       var t = ev.target.tagName;
-      if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA' || ev.altKey || ev.ctrlKey || ev.metaKey) return;
-      if (ev.key === 'ArrowLeft' && t !== 'BUTTON') mover(-1);
-      else if (ev.key === 'ArrowRight' && t !== 'BUTTON') mover(1);
+      if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA' || t === 'BUTTON' || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      if (ev.key === 'ArrowLeft') mover(-1);
+      else if (ev.key === 'ArrowRight') mover(1);
     });
   }
 

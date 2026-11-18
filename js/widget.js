@@ -126,11 +126,14 @@
       var ul = el('ul', { clase: 'w-lista' });
       if (!delDia.length) ul.appendChild(el('li', { clase: 'w-vacio', texto: 'Sin actividades' }));
       delDia.forEach(function (a) {
+        // Primero el área y enseguida la actividad; la hora solo si existe.
         ul.appendChild(el('li', { clase: 'w-act', estilo: '--color-area:' + area(a.area).color }, [
-          el('span', { clase: 'w-act__hora', texto: L.formatoHorario(a) }),
-          el('span', { clase: 'w-act__titulo', texto: a.titulo }),
-          el('span', { clase: 'w-act__area' }, [punto(a.area), area(a.area).corto || area(a.area).nombre]),
-          a.responsable ? el('span', { clase: 'w-act__resp', texto: a.responsable }) : null
+          el('span', { clase: 'w-act__linea' }, [
+            el('span', { clase: 'w-act__area' }, [punto(a.area), area(a.area).corto || area(a.area).nombre]),
+            ' ',
+            el('span', { clase: 'w-act__titulo', texto: a.titulo })
+          ]),
+          a.horaInicio ? el('span', { clase: 'w-act__hora', texto: L.formatoHora(a.horaInicio) }) : null
         ]));
       });
       col.appendChild(ul);
