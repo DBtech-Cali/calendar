@@ -117,4 +117,5 @@ html, body {
   border-radius: .6em;
 }
 
-.franja__pie { margin: 0; font-size: calc(14 * var(--u)); color: var(--greige); }
+/* Arriba, bajo el título, para que nunca lo tape la barra de tareas. */
+.franja__actualizado { margin: calc(-4 * var(--u)) 0 calc(2 * var(--u)); font-size: calc(14 * var(--u)); color: var(--greige); }
