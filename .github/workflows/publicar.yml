@@ -1,0 +1,72 @@
+# Publica el sitio en GitHub Pages y genera el fondo de escritorio del día.
+#
+# Se ejecuta:
+#   - cada día a las 5:00 a. m. de Colombia (10:00 UTC);
+#   - cada vez que se sube un cambio a main (por ejemplo, un wallpaper nuevo);
+#   - a mano, desde la pestaña Actions → "Publicar sitio y fondo" → Run workflow.
+#
+# Si no se pueden leer las actividades, el proceso falla y no publica nada:
+# el sitio y los computadores se quedan con la última versión buena.
+#
+# Requisito (una sola vez): Settings → Pages → Source: "GitHub Actions".
+
+name: Publicar sitio y fondo
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Pruebas de la lógica
+        run: node --test
+
+      - name: Instalar el navegador para las capturas
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Armar la carpeta del sitio
+        run: |
+          mkdir -p _site
+          cp -r index.html widget.html fondo.html widget.webmanifest css js assets _site/
+          mkdir -p _site/instalador
+          (cd instalador && zip -q -r ../_site/instalador/fondo-ccdb.zip .)
+
+      - name: Generar el fondo de escritorio del día
+        run: node scripts/generar-fondo.js _site
+
+      - name: Preparar la publicación
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Publicar en GitHub Pages
+        id: despliegue
+        uses: actions/deploy-pages@v4

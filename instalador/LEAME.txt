@@ -1,0 +1,32 @@
+FONDO DE ESCRITORIO - CRONOGRAMA INSTITUCIONAL CCDB
+====================================================
+
+Que hace
+--------
+Pone como fondo de escritorio el wallpaper institucional del mes con las
+actividades de los proximos 7 dias (sin domingo). Se actualiza solo una vez
+al dia. No instala programas ni deja nada corriendo.
+
+Instalar (en cada usuario de Windows)
+--------------------------------------
+1. Descomprima este ZIP en cualquier carpeta (por ejemplo, Descargas).
+2. Doble clic en "instalar.cmd".
+   Si Windows muestra "Windows protegio su PC": clic en "Mas informacion"
+   y luego en "Ejecutar de todas formas".
+3. Espere el mensaje "Listo" y presione una tecla. El fondo cambia de una vez.
+4. Ya puede borrar la carpeta descomprimida.
+
+Como se actualiza
+-----------------
+- Revisa al iniciar sesion y cada hora entre las 7:00 a. m. y las 6:00 p. m.
+- Si ya tiene el fondo del dia, no hace nada (ni siquiera usa internet).
+- Si no hay internet, deja el ultimo fondo y lo intenta en la siguiente hora.
+
+Quitar
+------
+Doble clic en "desinstalar.cmd" (de este ZIP o de la carpeta
+%LOCALAPPDATA%\CronogramaCCDB). Se restaura el fondo que habia antes.
+
+Si algo falla
+-------------
+Revise el archivo %LOCALAPPDATA%\CronogramaCCDB\registro.txt
