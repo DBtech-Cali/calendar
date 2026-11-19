@@ -145,7 +145,34 @@ Las rutas están en `logo` dentro de `js/config.js`. Usa solo archivos oficiales
 
 ---
 
-## 6. Cómo funciona
+## 6. Fondo de escritorio (en construcción)
+
+`fondo.html` arma el fondo de escritorio institucional:
+- **Izquierda:** libre para los íconos.
+- **Centro:** el arte del mes.
+- **Derecha:** una franja con los **próximos 7 días sin domingo** y sus actividades.
+
+Un proceso automático le tomará una "foto" cada día y la publicará como imagen para los computadores.
+
+**Wallpapers mensuales:** van en `assets/fondos/` con el nombre del mes, en JPG o PNG:
+
+```
+assets/fondos/2026-11.png
+assets/fondos/2026-12.png
+assets/fondos/2027-01.jpg
+assets/fondos/predeterminado.jpg   ← se usa si falta el de algún mes (opcional)
+```
+
+Para subir uno nuevo: en GitHub entra a la carpeta `assets/fondos` → **Add file → Upload files**, con el nombre `AAAA-MM`.
+
+Reglas de diseño para el arte:
+- 1920 × 1080 px, fondo negro.
+- El arte debe quedar entre los 560 y los 1370 px de ancho, porque a la derecha va la franja de actividades.
+- Dejar libres unos 50 px abajo para la barra de tareas.
+
+Para probar cómo se ve: abre `fondo.html?demo=1`, que usa datos de ejemplo. Con `fondo.html?fecha=2026-12-02` simula otro día.
+
+## 7. Cómo funciona
 
 ### Actividades
 
@@ -199,7 +226,7 @@ En la vista de mes, usa **Imprimir** del navegador (Ctrl + P). Se ocultan los bo
 
 ---
 
-## 7. Para quien mantenga el código
+## 8. Para quien mantenga el código
 
 - **Pruebas:** necesitas Node 18 o superior. En la carpeta del proyecto, ejecuta:
 
@@ -214,7 +241,7 @@ En la vista de mes, usa **Imprimir** del navegador (Ctrl + P). Se ocultan los bo
 
 ---
 
-## 8. Identidad gráfica
+## 9. Identidad gráfica
 
 La interfaz sigue el **Manual de Identidad Salesianos COM** (GMM004 V:03.07.25, en `docs/identidad/`):
 

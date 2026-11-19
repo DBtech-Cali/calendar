@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es-CO" data-tema="oscuro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fondo de escritorio · Cronograma institucional CCDB</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="css/tokens.css?v=2026112001">
+  <link rel="stylesheet" href="css/fondo.css?v=2026112001">
+</head>
+<body>
+  <!--
+    Plantilla del fondo de escritorio. No la ve nadie directamente: un proceso
+    automático le toma una "foto" (1920 × 1080 y 1366 × 768) y la publica como
+    imagen para los computadores.
+      Izquierda: libre para los íconos.  Centro: arte del mes (assets/fondos).
+      Derecha: los próximos 7 días (sin domingo) con sus actividades.
+    Parámetros opcionales: ?fecha=AAAA-MM-DD  ?demo=1
+  -->
+  <img id="arte" class="arte" alt="" hidden>
+
+  <aside class="franja" id="franja" aria-label="Actividades de los próximos días">
+    <h1 class="franja__titulo">Próximos días</h1>
+    <div class="franja__dias" id="dias"></div>
+    <p class="franja__pie" id="pie"></p>
+  </aside>
+
+  <script src="js/config.js?v=2026112001"></script>
+  <script src="js/logic.js?v=2026112001"></script>
+  <script src="js/db.js?v=2026112001"></script>
+  <script src="js/fondo.js?v=2026112001"></script>
+</body>
+</html>

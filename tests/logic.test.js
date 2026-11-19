@@ -172,3 +172,17 @@ test('rango breve para ir en la misma línea', () => {
   assert.equal(L.formatoRangoBreve('2026-11-28', '2026-12-02'), 'del 28 nov al 2 dic');
   assert.equal(L.formatoRangoBreve('2026-12-30', '2027-01-02'), 'del 30 dic 2026 al 2 ene 2027');
 });
+
+test('próximos 7 días sin domingo (franja del fondo y widget)', () => {
+  // Miércoles 25 nov 2026 → hasta el miércoles 2 dic, sin el domingo 29.
+  assert.deepEqual(L.proximosDiasSinDomingo('2026-11-25', 7),
+    ['2026-11-25', '2026-11-26', '2026-11-27', '2026-11-28', '2026-11-30', '2026-12-01', '2026-12-02']);
+  // Jueves → hasta el jueves siguiente.
+  const jue = L.proximosDiasSinDomingo('2026-11-26', 7);
+  assert.equal(jue[0], '2026-11-26');
+  assert.equal(jue[6], '2026-12-03');
+  // Domingo → empieza el lunes y termina el lunes siguiente.
+  assert.deepEqual(L.proximosDiasSinDomingo('2026-11-29', 7),
+    ['2026-11-30', '2026-12-01', '2026-12-02', '2026-12-03', '2026-12-04', '2026-12-05', '2026-12-07']);
+  assert.ok(L.proximosDiasSinDomingo('2026-11-25', 7).every((d) => L.diaSemana(d) !== 6));
+});

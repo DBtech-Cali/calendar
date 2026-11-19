@@ -1,0 +1,120 @@
+/*
+ * Fondo de escritorio · Cronograma institucional CCDB.
+ *
+ * El negro absoluto (#000000) es una decisión institucional: todos los
+ * wallpapers del centro usan ese fondo, y la franja debe empalmar con ellos.
+ * El resto de colores sale de css/tokens.css (paleta del manual).
+ *
+ * Medidas pensadas para 1920 × 1080 y escaladas con la altura de la pantalla
+ * (--u = 1 px de una pantalla de 1080 px de alto).
+ */
+:root {
+  --negro-fondo: #000000;
+  --u: calc(100vh / 1080);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100vw; height: 100vh;
+  overflow: hidden;
+  background: var(--negro-fondo);
+  color: var(--crema);
+  font-family: var(--fuente-cuerpo);
+  font-weight: var(--peso-cuerpo);
+}
+
+/* Arte del mes: ocupa toda la pantalla, centrado. */
+.arte {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+}
+
+/*
+ * Franja derecha: desde el 74 % del ancho (el arte llega hasta ~71 %).
+ * Abajo deja libre el espacio de la barra de tareas de Windows.
+ */
+.franja {
+  position: absolute;
+  top: calc(36 * var(--u));
+  bottom: calc(64 * var(--u));
+  left: 74vw; right: 2.2vw;
+  display: flex; flex-direction: column;
+  gap: calc(10 * var(--u));
+  font-size: var(--letra, calc(19 * var(--u)));
+  line-height: 1.25;
+}
+
+.franja__titulo {
+  font-family: var(--fuente-titulo); font-weight: 400;
+  font-size: calc(34 * var(--u));
+  line-height: 1.05;
+  margin: 0;
+  color: var(--crema);
+  padding-bottom: calc(8 * var(--u));
+  border-bottom: calc(3 * var(--u)) solid var(--rojo);
+}
+
+.franja__dias {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: .55em;
+  overflow: hidden;
+}
+
+.dia { display: flex; flex-direction: column; gap: .25em; }
+
+.dia__cabeza {
+  margin: 0;
+  display: flex; align-items: baseline; gap: .45em;
+  font-family: var(--fuente-titulo); font-weight: 400;
+  font-size: 1.12em;
+  color: var(--crema);
+}
+.dia__fecha { font-family: var(--fuente-cuerpo); font-weight: var(--peso-fuerte); font-size: .78em; color: var(--greige); }
+.dia__hoy {
+  align-self: center;
+  padding: .05em .55em; border-radius: var(--radio-pildora);
+  background: var(--rojo); color: var(--blanco);
+  font-family: var(--fuente-cuerpo); font-weight: var(--peso-fuerte); font-size: .7em;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+.dia__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .22em; }
+.dia__vacio { color: var(--greige); font-size: .85em; }
+
+/* Misma línea: ÁREA · actividad · hora · fechas. */
+.act {
+  padding: .18em .5em .22em .55em;
+  border-left: .28em solid var(--color-area);
+  border-radius: .35em;
+  background: var(--carbon);
+  overflow-wrap: anywhere;
+}
+.act__area {
+  display: inline-flex; align-items: center; gap: .3em;
+  font-size: .72em; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--ambar-claro);
+  white-space: nowrap;
+}
+.act__titulo { font-weight: var(--peso-fuerte); color: var(--crema); }
+.act__hora, .act__rango { font-size: .82em; font-weight: var(--peso-fuerte); color: var(--ambar); white-space: nowrap; }
+.act__mas { font-size: .8em; font-weight: var(--peso-fuerte); color: var(--greige); padding-left: .55em; }
+
+.punto {
+  display: inline-block; flex: none;
+  width: .7em; height: .7em; border-radius: 50%;
+  background: var(--color-area);
+  box-shadow: 0 0 0 1.5px var(--greige);
+}
+
+/* Hoy: resaltado con un marco ámbar. */
+.dia--hoy {
+  padding: .4em .5em .5em;
+  border: calc(2 * var(--u)) solid var(--ambar);
+  border-radius: .6em;
+}
+
+.franja__pie { margin: 0; font-size: calc(14 * var(--u)); color: var(--greige); }

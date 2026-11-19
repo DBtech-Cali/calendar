@@ -115,6 +115,19 @@
     return semanas;
   }
 
+  /**
+   * Los próximos n días desde la fecha dada (incluida), saltando los domingos.
+   * Si la fecha es domingo, empieza el lunes. Ej.: miércoles → mié, jue, vie,
+   * sáb, lun, mar, mié.
+   */
+  function proximosDiasSinDomingo(desde, n) {
+    var r = [];
+    for (var d = desde; r.length < n; d = sumarDias(d, 1)) {
+      if (diaSemana(d) !== 6) r.push(d);
+    }
+    return r;
+  }
+
   /** Fecha de hoy en hora local del equipo, como "AAAA-MM-DD". */
   function hoy(ahora) {
     var d = ahora || new Date();
@@ -376,7 +389,7 @@
     diasDelMes: diasDelMes, sumarDias: sumarDias, diferenciaDias: diferenciaDias,
     diaSemana: diaSemana, esFinDeSemana: esFinDeSemana, inicioSemana: inicioSemana,
     diasDeSemana: diasDeSemana, rangoDias: rangoDias, sumarMeses: sumarMeses,
-    matrizMes: matrizMes, hoy: hoy,
+    matrizMes: matrizMes, hoy: hoy, proximosDiasSinDomingo: proximosDiasSinDomingo,
     esHoraValida: esHoraValida, aMinutos: aMinutos,
     normalizar: normalizar, validar: validar, validarLote: validarLote, ocurreEn: ocurreEn, tocaRango: tocaRango,
     comparar: comparar, actividadesDelDia: actividadesDelDia, actividadesQueInician: actividadesQueInician,

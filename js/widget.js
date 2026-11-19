@@ -2,7 +2,7 @@
  * Cronograma institucional CCDB · Widget de la semana (solo lectura).
  *
  * Parámetros opcionales en la dirección:
- *   ?modo=semana|proximos   semana actual (lunes a domingo) o próximos 7 días
+ *   ?modo=proximos|semana   próximos 7 días sin domingo (predeterminado) o semana actual de lunes a sábado
  *   ?dias=5                 solo lunes a viernes
  *   ?area=sst,pastoral      solo esas áreas
  *   ?tema=oscuro            fondo oscuro
@@ -19,7 +19,7 @@
 
   var params = new URLSearchParams(location.search);
   var estado = {
-    modo: params.get('modo') === 'proximos' ? 'proximos' : 'semana',
+    modo: params.get('modo') === 'semana' ? 'semana' : 'proximos',
     soloHabiles: params.get('dias') === '5',
     areas: (params.get('area') || '').split(',').map(function (s) { return s.trim(); }).filter(function (id) { return AREAS[id]; }),
     oscuro: params.get('tema') === 'oscuro',
@@ -57,14 +57,17 @@
   /* ---------- Días visibles ---------- */
   function diasVisibles() {
     var dias;
+    // El domingo nunca se muestra (casi nunca tiene actividades).
     if (estado.modo === 'semana') {
-      dias = L.diasDeSemana(estado.hoy);
-      if (estado.soloHabiles) dias = dias.slice(0, 5);
-    } else {
+      dias = L.diasDeSemana(estado.hoy).slice(0, estado.soloHabiles ? 5 : 6);
+    } else if (estado.soloHabiles) {
       dias = [];
-      for (var d = estado.hoy; dias.length < (estado.soloHabiles ? 5 : 7); d = L.sumarDias(d, 1)) {
-        if (!estado.soloHabiles || !L.esFinDeSemana(d)) dias.push(d);
+      for (var d = estado.hoy; dias.length < 5; d = L.sumarDias(d, 1)) {
+        if (!L.esFinDeSemana(d)) dias.push(d);
       }
+    } else {
+      // Igual que el fondo de escritorio: los próximos 7 días, saltando el domingo.
+      dias = L.proximosDiasSinDomingo(estado.hoy, 7);
     }
     return dias;
   }
