@@ -80,7 +80,10 @@ function hoyEnColombia() {
       await pagina.evaluate(() => document.fonts.ready);
       const archivo = path.join(salida, `actual-${ancho}x${alto}.jpg`);
       await pagina.screenshot({ path: archivo, type: 'jpeg', quality: 90 });
-      console.log('Generado', archivo, Math.round(fs.statSync(archivo).size / 1024) + ' KB');
+      const tamano = fs.statSync(archivo).size;
+      // Los computadores rechazan imágenes de más de 3 MB.
+      if (tamano > 3 * 1024 * 1024) throw new Error('La imagen generada pesa más de 3 MB: ' + archivo);
+      console.log('Generado', archivo, Math.round(tamano / 1024) + ' KB');
       await contexto.close();
     }
     const info = { fecha, generado: new Date().toISOString(), version: 1 };

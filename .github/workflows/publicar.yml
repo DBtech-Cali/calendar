@@ -9,6 +9,9 @@
 # el sitio y los computadores se quedan con la última versión buena.
 #
 # Requisito (una sola vez): Settings → Pages → Source: "GitHub Actions".
+#
+# Seguridad: las acciones de GitHub están fijadas a un commit exacto (no a
+# una etiqueta que se pueda mover) y Playwright a una versión exacta.
 
 name: Publicar sitio y fondo
 
@@ -37,10 +40,10 @@ jobs:
       url: ${{ steps.despliegue.outputs.page_url }}
     steps:
       - name: Descargar el repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Preparar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
 
@@ -57,16 +60,21 @@ jobs:
           mkdir -p _site
           cp -r index.html widget.html fondo.html widget.webmanifest css js assets _site/
           mkdir -p _site/instalador
-          (cd instalador && zip -q -r ../_site/instalador/fondo-ccdb.zip .)
+          # ZIP reproducible: misma fecha y mismo orden de archivos en cada
+          # ejecución, para que su huella SHA-256 solo cambie si cambia el contenido.
+          (cd instalador && touch -d '2026-01-01 00:00:00' * && ls | LC_ALL=C sort | zip -q -X -D ../_site/instalador/fondo-ccdb.zip -@)
+          (cd _site/instalador && sha256sum fondo-ccdb.zip > fondo-ccdb.zip.sha256.txt)
+          echo "Huella SHA-256 del instalador:"
+          cat _site/instalador/fondo-ccdb.zip.sha256.txt
 
       - name: Generar el fondo de escritorio del día
         run: node scripts/generar-fondo.js _site
 
       - name: Preparar la publicación
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: _site
 
       - name: Publicar en GitHub Pages
         id: despliegue
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

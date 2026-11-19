@@ -7,6 +7,10 @@
 # - Si no hay internet, deja el fondo actual y lo intenta en la siguiente hora.
 #
 # Uso manual: actualizar-fondo.ps1 -Forzar   (descarga aunque ya tenga la de hoy)
+#
+# Seguridad: este script nunca ejecuta nada de lo que descarga. Solo lee una
+# fecha (actual.json, maximo 4 KB) y una imagen, que debe ser un JPG real de
+# maximo 3 MB; si no cumple, se descarta y se conserva el fondo anterior.
 
 param([switch]$Forzar)
 
@@ -15,6 +19,33 @@ $Base = 'https://dbtech-cali.github.io/calendar/fondos/'
 $Carpeta = Join-Path $env:LOCALAPPDATA 'CronogramaCCDB'
 $Estado = Join-Path $Carpeta 'estado.txt'
 $Registro = Join-Path $Carpeta 'registro.txt'
+$MaxJson = 4KB
+$MaxImagen = 3MB
+
+# Descarga una direccion a un archivo, cortando si supera el tamano maximo.
+function Descargar([string]$Url, [string]$Ruta, [long]$Maximo) {
+    $solicitud = [Net.HttpWebRequest]::Create($Url)
+    $solicitud.Timeout = 60000
+    $solicitud.ReadWriteTimeout = 60000
+    $respuesta = $solicitud.GetResponse()
+    try {
+        if ($respuesta.ContentLength -gt $Maximo) { throw "El archivo es demasiado grande ($($respuesta.ContentLength) bytes)." }
+        $entrada = $respuesta.GetResponseStream()
+        $salida = [IO.File]::Create($Ruta)
+        try {
+            $bufer = New-Object byte[] 65536
+            $total = 0
+            while (($leidos = $entrada.Read($bufer, 0, $bufer.Length)) -gt 0) {
+                $total += $leidos
+                if ($total -gt $Maximo) { throw 'El archivo supera el tamano permitido.' }
+                $salida.Write($bufer, 0, $leidos)
+            }
+        } finally { $salida.Close(); $entrada.Close() }
+    } catch {
+        Remove-Item -Path $Ruta -Force -ErrorAction SilentlyContinue
+        throw
+    } finally { $respuesta.Close() }
+}
 
 function Anotar([string]$Mensaje) {
     $linea = '{0:yyyy-MM-dd HH:mm}  {1}' -f (Get-Date), $Mensaje
@@ -35,12 +66,14 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $marca = [DateTime]::Now.Ticks
 
+    $rutaJson = Join-Path $Carpeta 'actual.json'
     try {
-        $info = Invoke-RestMethod -Uri ($Base + 'actual.json?t=' + $marca) -UseBasicParsing -TimeoutSec 30
+        Descargar ($Base + 'actual.json?t=' + $marca) $rutaJson $MaxJson
     } catch {
         Anotar ('Sin conexion; se reintentara mas tarde. ' + $_.Exception.Message)
         exit 0
     }
+    $info = [IO.File]::ReadAllText($rutaJson) | ConvertFrom-Json
     $fecha = [string]$info.fecha
     if ($fecha -notmatch '^\d{4}-\d{2}-\d{2}$') { throw "Respuesta inesperada del servidor: $fecha" }
 
@@ -59,8 +92,17 @@ try {
     # Un nombre por dia, para que Windows no use una copia guardada.
     $destino = Join-Path $Carpeta ('fondo-' + $fecha + '.jpg')
     $temporal = $destino + '.descargando'
-    Invoke-WebRequest -Uri ($Base + $nombre + '?t=' + $marca) -OutFile $temporal -UseBasicParsing -TimeoutSec 120
-    if ((Get-Item $temporal).Length -lt 20000) { Remove-Item $temporal -Force; throw 'La imagen descargada esta incompleta.' }
+    Descargar ($Base + $nombre + '?t=' + $marca) $temporal $MaxImagen
+
+    # Validar que sea una imagen JPG real y completa antes de usarla.
+    $bytes = [IO.File]::ReadAllBytes($temporal)
+    $esJpg = $bytes.Length -gt 20000 -and
+        $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xD8 -and $bytes[2] -eq 0xFF -and
+        $bytes[$bytes.Length - 2] -eq 0xFF -and $bytes[$bytes.Length - 1] -eq 0xD9
+    if (-not $esJpg) {
+        Remove-Item -Path $temporal -Force -ErrorAction SilentlyContinue
+        throw 'El archivo descargado no es una imagen JPG valida; se conserva el fondo anterior.'
+    }
     Move-Item -Path $temporal -Destination $destino -Force
 
     # Poner el fondo en modo "Rellenar".

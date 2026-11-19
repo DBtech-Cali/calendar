@@ -177,6 +177,29 @@ Cada computador tiene como fondo de escritorio el wallpaper institucional del me
 
 Se instala **por usuario de Windows**: si un equipo lo usan varias personas con usuarios distintos, hay que instalarlo en cada usuario. Para quitarlo, usa **`desinstalar.cmd`**, que restaura el fondo anterior. Si algo falla, el detalle queda en `%LOCALAPPDATA%\CronogramaCCDB\registro.txt`.
 
+### Seguridad del fondo automático
+
+- **Nada de lo que se descarga se ejecuta.** Cada equipo solo descarga:
+  - una fecha (`actual.json`, de máximo 4 KB);
+  - una imagen, que debe ser un **JPG real de máximo 3 MB**. Si no cumple, se descarta y se conserva el fondo anterior.
+- **Los scripts no se actualizan solos.** Cada equipo usa la copia que se instaló; un cambio en el repositorio no llega a los equipos ya instalados.
+- **Sin permisos de administrador.** La tarea corre con los permisos limitados del usuario.
+- **Herramientas fijadas.** El proceso de GitHub usa versiones exactas, fijadas por su commit, para que una actualización maliciosa de terceros no entre sola.
+- **El único momento sensible es la instalación.** Por eso conviene descargar el instalador **una sola vez**, verificar su huella y usar **esa misma copia** (por ejemplo, en una USB) para todos los equipos.
+
+**Verificar la huella del instalador** (en Windows, en la carpeta donde está el ZIP):
+
+```
+certutil -hashfile fondo-ccdb.zip SHA256
+```
+
+El resultado debe coincidir con la huella publicada en `…/calendar/instalador/fondo-ccdb.zip.sha256.txt` y con la que quedó anotada al aprobar el instalador. Si un día la huella publicada cambia sin que nadie haya modificado el instalador, **no lo instales** y revisa quién cambió el repositorio.
+
+**Cuidar las llaves:**
+- verificación en dos pasos en todas las cuentas de GitHub con acceso al repositorio;
+- revisar en **Settings → Collaborators** que solo estén las personas necesarias;
+- cambiar la contraseña de edición del calendario si alguien sale de la institución.
+
 ### Wallpapers mensuales
 
 Van en `assets/fondos/` con el nombre del mes, en JPG o PNG:
