@@ -1,7 +1,11 @@
 # Publica el sitio en GitHub Pages y genera el fondo de escritorio del día.
 #
 # Se ejecuta:
-#   - cada día a las 5:00 a. m. de Colombia (10:00 UTC);
+#   - cada madrugada, en varios intentos (3:23, 4:23, 5:23 y 6:23 a. m. de
+#     Colombia). GitHub puede retrasar o saltarse una ejecución programada
+#     cuando sus servidores están cargados; con varios intentos, basta con
+#     que uno funcione. Repetir no afecta a los computadores: solo descargan
+#     cuando cambia la fecha de la imagen;
 #   - cada vez que se sube un cambio a main (por ejemplo, un wallpaper nuevo);
 #   - a mano, desde la pestaña Actions → "Publicar sitio y fondo" → Run workflow.
 #
@@ -19,7 +23,11 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 10 * * *'
+    # Minuto 23 para evitar la hora en punto, la más congestionada en GitHub.
+    - cron: '23 8 * * *'
+    - cron: '23 9 * * *'
+    - cron: '23 10 * * *'
+    - cron: '23 11 * * *'
   workflow_dispatch:
 
 permissions:

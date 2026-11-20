@@ -158,7 +158,7 @@ Cada computador tiene como fondo de escritorio el wallpaper institucional del me
 
 ### Cómo funciona
 
-1. **GitHub arma la imagen cada día a las 5:00 a. m.** El proceso `.github/workflows/publicar.yml`:
+1. **GitHub arma la imagen cada madrugada** (varios intentos entre las 3:23 y las 6:23 a. m., porque GitHub a veces retrasa o salta una ejecución programada). El proceso `.github/workflows/publicar.yml`:
    - abre `fondo.html` con un navegador invisible;
    - le toma una "foto" en 1920 × 1080 y en 1366 × 768;
    - la publica en `https://dbtech-cali.github.io/calendar/fondos/`.
