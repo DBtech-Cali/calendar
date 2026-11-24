@@ -3,12 +3,16 @@
 
 $ErrorActionPreference = 'Continue'
 $destino = Join-Path $env:LOCALAPPDATA 'CronogramaCCDB'
+$nombreAcceso = 'Actualizar fondo del cronograma.lnk'
 
 Write-Host ''
 Write-Host 'Quitando el fondo de escritorio del Cronograma institucional CCDB...'
 
 Unregister-ScheduledTask -TaskName 'Fondo Cronograma CCDB' -Confirm:$false -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path ([Environment]::GetFolderPath('Startup')) 'Fondo Cronograma CCDB.vbs') -Force -ErrorAction SilentlyContinue
+foreach ($carpetaAcceso in [Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) {
+    Remove-Item -Path (Join-Path $carpetaAcceso $nombreAcceso) -Force -ErrorAction SilentlyContinue
+}
 
 # Restaurar el fondo anterior, si todavia existe.
 $anterior = Join-Path $destino 'fondo-anterior.txt'

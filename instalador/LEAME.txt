@@ -16,11 +16,20 @@ Instalar (en cada usuario de Windows)
 3. Espere el mensaje "Listo" y presione una tecla. El fondo cambia de una vez.
 4. Ya puede borrar la carpeta descomprimida.
 
+Si ya tenia una version anterior instalada, basta con ejecutar de nuevo
+"instalar.cmd": la reemplaza y conserva el fondo original de la persona.
+
 Como se actualiza
 -----------------
 - Revisa al iniciar sesion y cada hora entre las 7:00 a. m. y las 6:00 p. m.
 - Si ya tiene el fondo del dia, no hace nada (ni siquiera usa internet).
 - Si no hay internet, deja el ultimo fondo y lo intenta en la siguiente hora.
+
+Actualizar a mano
+-----------------
+Doble clic en el acceso directo "Actualizar fondo del cronograma" (en el
+escritorio y en el menu Inicio). Descarga de nuevo la imagen del dia y avisa
+el resultado con un mensaje.
 
 Quitar
 ------

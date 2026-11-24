@@ -158,29 +158,39 @@ Cada computador tiene como fondo de escritorio el wallpaper institucional del me
 
 ### Cómo funciona
 
-1. **GitHub arma la imagen cada madrugada** (varios intentos entre las 3:23 y las 6:23 a. m., porque GitHub a veces retrasa o salta una ejecución programada). El proceso `.github/workflows/publicar.yml`:
+1. **GitHub arma las imágenes con un día de anticipación.** El proceso `.github/workflows/publicar.yml`:
    - abre `fondo.html` con un navegador invisible;
-   - le toma una "foto" en 1920 × 1080 y en 1366 × 768;
-   - la publica en `https://dbtech-cali.github.io/calendar/fondos/`.
+   - genera los fondos de **hoy, mañana y pasado mañana**, en 1920 × 1080 y en 1366 × 768;
+   - los publica en `https://dbtech-cali.github.io/calendar/fondos/` con la fecha en el nombre, por ejemplo `2026-11-25-1920x1080.jpg`.
 
-   También se ejecuta cada vez que se sube un cambio, por ejemplo un wallpaper nuevo. Si no puede leer las actividades, **no publica nada** y GitHub envía un correo de aviso; los equipos se quedan con el último fondo bueno.
+   **Cuándo corre:**
+   - cuatro veces al día (8:23 a. m., 1:23 p. m., 5:23 p. m. y 9:23 p. m. de Colombia);
+   - cada vez que se sube un cambio, por ejemplo un wallpaper nuevo.
+
+   GitHub suele ejecutar los procesos programados con horas de retraso (se han visto 8 a 11 horas), pero como la imagen de cada día se genera desde el día anterior, igual está lista en la mañana. Cada ejecución refresca las imágenes con las actividades más recientes.
+
+   Si no puede leer las actividades, **no publica nada** y GitHub envía un correo de aviso; los equipos se quedan con el último fondo bueno. Si la publicación falla por un error de GitHub, la reintenta una vez.
 2. **Cada computador** revisa al iniciar sesión y cada hora entre las 7:00 a. m. y las 6:00 p. m.:
    - si ya tiene el fondo del día, no hace nada (ni siquiera usa internet);
-   - si no, descarga la imagen (unos 130 KB) y la pone de fondo;
+   - si no, descarga **la imagen de su fecha** (unos 200 KB) y la pone de fondo;
+   - si la imagen de su fecha aún no existe, pone la más reciente publicada y reintenta en la siguiente hora;
    - si no hay internet, deja el último fondo y reintenta en la siguiente hora.
+3. **Actualizar a mano:** el acceso directo **"Actualizar fondo del cronograma"**, en el escritorio y en el menú Inicio, descarga de nuevo la imagen del día y muestra un mensaje con el resultado. Sirve si se cargaron actividades durante el día. Esas actividades aparecen después de la siguiente ejecución en GitHub, o de inmediato si se ejecuta a mano (ver "Generar el fondo a mano").
 
 ### Instalar en un computador (5 minutos, sin permisos de administrador)
 
 1. Descarga el instalador: `https://dbtech-cali.github.io/calendar/instalador/fondo-ccdb.zip`.
 2. Descomprímelo y haz doble clic en **`instalar.cmd`**. Si aparece "Windows protegió su PC": **Más información → Ejecutar de todas formas**.
-3. Espera el mensaje "Listo". El fondo cambia de inmediato.
+3. Espera el mensaje "Listo". El fondo cambia de inmediato y aparece el acceso directo "Actualizar fondo del cronograma".
+
+Para **actualizar una instalación anterior**, basta con ejecutar de nuevo `instalar.cmd` con el ZIP nuevo: reemplaza los archivos y conserva el fondo original de la persona.
 
 Se instala **por usuario de Windows**: si un equipo lo usan varias personas con usuarios distintos, hay que instalarlo en cada usuario. Para quitarlo, usa **`desinstalar.cmd`**, que restaura el fondo anterior. Si algo falla, el detalle queda en `%LOCALAPPDATA%\CronogramaCCDB\registro.txt`.
 
 ### Seguridad del fondo automático
 
 - **Nada de lo que se descarga se ejecuta.** Cada equipo solo descarga:
-  - una fecha (`actual.json`, de máximo 4 KB);
+  - una fecha (`actual.json`, de máximo 4 KB, solo si falta la imagen del día);
   - una imagen, que debe ser un **JPG real de máximo 3 MB**. Si no cumple, se descarta y se conserva el fondo anterior.
 - **Los scripts no se actualizan solos.** Cada equipo usa la copia que se instaló; un cambio en el repositorio no llega a los equipos ya instalados.
 - **Sin permisos de administrador.** La tarea corre con los permisos limitados del usuario.
@@ -220,7 +230,7 @@ Reglas de diseño para el arte:
 
 ### Generar el fondo a mano
 
-En GitHub: pestaña **Actions → "Publicar sitio y fondo" → Run workflow**. Sirve, por ejemplo, si se cargaron actividades y no se quiere esperar a la mañana siguiente.
+En GitHub: pestaña **Actions → "Publicar sitio y fondo" → Run workflow**. Tarda unos 2 minutos. Sirve, por ejemplo, si se cargaron actividades y no se quiere esperar a la siguiente ejecución programada. Después, en cada equipo, el acceso directo "Actualizar fondo del cronograma" trae la imagen nueva.
 
 **Importante:** en repositorios públicos, GitHub pausa los procesos programados si el repositorio pasa **60 días sin cambios**. Subir el wallpaper de cada mes ya cuenta como cambio. Si alguna vez se pausa, en la pestaña Actions aparece un botón para reactivarlo.
 

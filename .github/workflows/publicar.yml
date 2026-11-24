@@ -1,11 +1,13 @@
 # Publica el sitio en GitHub Pages y genera el fondo de escritorio del día.
 #
+# Cada ejecución genera los fondos de HOY, MAÑANA y PASADO MAÑANA. Así, aunque
+# GitHub retrase las ejecuciones programadas (se han visto retrasos de 8 a 11
+# horas), la imagen de cada día queda publicada desde el día anterior.
+#
 # Se ejecuta:
-#   - cada madrugada, en varios intentos (3:23, 4:23, 5:23 y 6:23 a. m. de
-#     Colombia). GitHub puede retrasar o saltarse una ejecución programada
-#     cuando sus servidores están cargados; con varios intentos, basta con
-#     que uno funcione. Repetir no afecta a los computadores: solo descargan
-#     cuando cambia la fecha de la imagen;
+#   - cuatro veces al día, repartidas (8:23 a. m., 1:23 p. m., 5:23 p. m. y
+#     9:23 p. m. de Colombia, si GitHub las cumple a tiempo); cada una refresca
+#     las imágenes con las actividades más recientes;
 #   - cada vez que se sube un cambio a main (por ejemplo, un wallpaper nuevo);
 #   - a mano, desde la pestaña Actions → "Publicar sitio y fondo" → Run workflow.
 #
@@ -23,11 +25,11 @@ on:
   push:
     branches: [main]
   schedule:
-    # Minuto 23 para evitar la hora en punto, la más congestionada en GitHub.
-    - cron: '23 8 * * *'
-    - cron: '23 9 * * *'
-    - cron: '23 10 * * *'
-    - cron: '23 11 * * *'
+    # Minuto 23 para evitar la hora en punto, la más congestionada en GitHub (UTC).
+    - cron: '23 13 * * *'
+    - cron: '23 18 * * *'
+    - cron: '23 22 * * *'
+    - cron: '23 2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -45,7 +47,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: github-pages
-      url: ${{ steps.despliegue.outputs.page_url }}
+      url: https://dbtech-cali.github.io/calendar/
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -79,10 +81,20 @@ jobs:
         run: node scripts/generar-fondo.js _site
 
       - name: Preparar la publicación
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _site
 
       - name: Publicar en GitHub Pages
         id: despliegue
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      # GitHub a veces no encuentra el paquete recién subido (falla intermitente).
+      - name: Esperar antes de reintentar
+        if: steps.despliegue.outcome == 'failure'
+        run: sleep 60
+
+      - name: Reintentar la publicación
+        if: steps.despliegue.outcome == 'failure'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
